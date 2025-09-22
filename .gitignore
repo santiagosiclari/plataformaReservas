@@ -1,0 +1,65 @@
+# ── SO / editores ───────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# ── Python (backend) ────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.eggs/
+.build/
+dist/
+build/
+pip-wheel-metadata/
+.wheels/
+.python-version
+
+# Entornos virtuales
+.venv/
+venv/
+env/
+ENV/
+
+# Tests / linters / caches
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+.pytype/
+.cache/
+
+# Logs / dumps
+*.log
+logs/
+*.sql
+*.sqlite3
+dev.db
+
+# Config/secretos
+.env
+.env.*
+!.env.example  # si querés versionar un template vacío
+
+# Alembic
+alembic/*/__pycache__/
+# (IMPORTANTE: NO ignores alembic/versions/*.py; hay que versionarlas)
+
+# ── Node/Frontend (si usás el dir frontend/) ────────────────────
+frontend/node_modules/
+frontend/.next/
+frontend/.nuxt/
+frontend/.turbo/
+frontend/.cache/
+frontend/.parcel-cache/
+frontend/dist/
+frontend/build/
+frontend/npm-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
