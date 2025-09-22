@@ -7,7 +7,7 @@ from app.schemas.court import CourtCreate, CourtUpdate, CourtOut
 from app.models.court import Court
 from app.models.venue import Venue
 from app.models.user import User
-from app.deps import require_owner, get_db
+from app.deps import get_db, get_current_user, require_owner, require_roles
 
 router = APIRouter(prefix="/venues/{venue_id}/courts", tags=["courts"])
 

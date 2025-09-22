@@ -1,9 +1,10 @@
+# router/users
 import os
 from fastapi import APIRouter, Depends, status, HTTPException, Header
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from passlib.hash import bcrypt
-from app.deps import get_db, require_admin
+from app.deps import get_db, require_owner
 from app.models.user import User
 from app.models.enums import RoleEnum
 from app.schemas.user import UserCreate, UserOut, UserRoleUpdate
@@ -48,7 +49,7 @@ def update_user_role(
     user_id: int,
     payload: UserRoleUpdate,
     db: Session = Depends(get_db),
-    _=Depends(require_admin),
+    _=Depends(require_owner),
 ):
     user = db.get(User, user_id)
     if not user:

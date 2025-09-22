@@ -3,7 +3,7 @@ from enum import Enum
 class RoleEnum(str, Enum):
     PLAYER = "PLAYER"
     OWNER = "OWNER"
-    SUPER = "SUPER"
+    ADMIN = "ADMIN"
 
 class SportEnum(str, Enum):
     PADEL = "PADEL"

@@ -1,3 +1,4 @@
+# models/user
 from sqlalchemy import String, DateTime, func, Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import List, Optional
