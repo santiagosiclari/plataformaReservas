@@ -1,28 +1,31 @@
-import React, { ReactNode } from "react";
-import { Box, Container, Typography } from "@mui/material";
+import React from "react";
+import { Outlet, useNavigate } from "react-router-dom";
+import Header from "./Header";
+import Footer from "./Footer";
+import "./AppLayout.css";
 
-interface Props {
-  children: ReactNode;
-}
+const AppLayout: React.FC = () => {
+  const navigate = useNavigate();
 
-function AppLayout({ children }: Props) {
   return (
-    <Box>
-      <Box component="header" sx={{ p: 2, bgcolor: "primary.main", color: "white" }}>
-        <Typography variant="h6">Mi App de Reservas</Typography>
-      </Box>
+    <div className="app-root">
+      <Header
+        user={undefined}
+        onLogin={() => navigate("/login")}
+        onLogout={() => navigate("/logout")}
+        brand="Plataforma Reservas"
+      />
 
-      <Container component="main" sx={{ py: 3 }}>
-        {children}
-      </Container>
+      <main className="app-main">
+        {/* Usá .container para ancho “lg”; podés quitarlo en páginas full-bleed */}
+        <div className="container">
+          <Outlet />
+        </div>
+      </main>
 
-      <Box component="footer" sx={{ p: 2, bgcolor: "grey.200" }}>
-        <Typography variant="body2" align="center">
-          © {new Date().getFullYear()} Mi Proyecto
-        </Typography>
-      </Box>
-    </Box>
+      <Footer />
+    </div>
   );
-}
+};
 
 export default AppLayout;

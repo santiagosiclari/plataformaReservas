@@ -1,0 +1,84 @@
+.site-header{
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    backdrop-filter: saturate(140%) blur(8px);
+    background: color-mix(in srgb, var(--panel) 88%, transparent);
+    border-bottom: 1px solid var(--border);
+  }
+  
+  .header-inner{
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: var(--space-3);
+    align-items: center;
+    padding-block: var(--space-3);
+  }
+  
+  .brand-link{
+    display: inline-block;
+    text-decoration: none;
+    color: var(--text);
+    font-weight: 700;
+    letter-spacing: .2px;
+    font-size: 1.05rem;
+  }
+  .brand-link:hover{ color: var(--brand); }
+  
+  .nav{
+    display: none;
+    gap: var(--space-3);
+  }
+  @media (min-width: 768px){
+    .nav{ display: flex; }
+  }
+  .nav-link{
+    text-decoration: none;
+    color: var(--muted);
+    padding: .35rem .6rem;
+    border-radius: 10px;
+  }
+  .nav-link:hover{
+    color: var(--text);
+    background: #151823;
+  }
+  
+  .actions{
+    display: flex;
+    justify-self: end;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  
+  .user-chip{
+    font-size: .9rem;
+    color: var(--muted);
+    padding: .35rem .6rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+  }
+  
+  /* Buttons */
+  .btn{
+    appearance: none;
+    border: 1px solid var(--border);
+    background: #151823;
+    color: var(--text);
+    border-radius: 12px;
+    padding: .55rem .9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform .04s ease, background .2s ease, border-color .2s ease;
+  }
+  .btn:hover{ background: #191d2a; border-color: #2a2f3a; }
+  .btn:active{ transform: translateY(1px); }
+
+  .btn-primary{
+    background: var(--brand);
+    color: #07141a;
+    border-color: transparent;
+  }
+  .btn-primary:hover{ background: var(--brand-600); }
+  .btn-ghost{
+    background: transparent;
+  }
