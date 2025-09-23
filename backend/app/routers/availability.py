@@ -1,9 +1,10 @@
 # app/routers/availability.py
 from datetime import datetime, date, timedelta
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from fastapi import APIRouter, HTTPException, Query, Depends
 from sqlalchemy import and_, select
 from sqlalchemy.orm import Session
+# from zoneinfo import ZoneInfo  # si usás tz aware
 
 from app.deps import get_db
 from app.models.schedule import CourtSchedule
@@ -19,7 +20,7 @@ def get_availability(
     date_str: str = Query(..., alias="date", description="YYYY-MM-DD"),
     db: Session = Depends(get_db),
 ):
-    # 1) validar fecha
+    # 1) Validar fecha
     try:
         target_date = date.fromisoformat(date_str)
     except ValueError:
@@ -27,22 +28,27 @@ def get_availability(
 
     weekday = target_date.weekday()
 
-    # 2) traer schedule del día
-    sched: CourtSchedule | None = db.execute(
+    # 2) Traer schedule del día
+    sched: Optional[CourtSchedule] = db.execute(
         select(CourtSchedule).where(
             and_(CourtSchedule.court_id == court_id, CourtSchedule.weekday == weekday)
         )
     ).scalar_one_or_none()
 
     if not sched:
-        # sin horario definido -> no hay slots
-        return {"court_id": court_id, "date": date_str, "slots": []}
+        return {"court_id": court_id, "date": date_str, "slot_minutes": None, "slots": []}
 
     slot_minutes = sched.slot_minutes
-    day_open = datetime.combine(target_date, sched.open_time)
-    day_close = datetime.combine(target_date, sched.close_time)
 
-    # 3) traer bookings confirmados (o no cancelados) que se solapen ese día
+    # tz = ZoneInfo("America/Argentina/Buenos_Aires")  # si trabajás aware
+    day_open = datetime.combine(target_date, sched.open_time)  # .replace(tzinfo=tz)
+    day_close = datetime.combine(target_date, sched.close_time)  # .replace(tzinfo=tz)
+
+    if day_open >= day_close:
+        # defensa básica ante datos mal cargados
+        return {"court_id": court_id, "date": date_str, "slot_minutes": slot_minutes, "slots": []}
+
+    # 3) Bookings activos que se solapen con la ventana del día
     bookings: List[Booking] = db.execute(
         select(Booking).where(
             and_(
@@ -54,23 +60,24 @@ def get_availability(
         )
     ).scalars().all()
 
-    # 4) generar slots y marcar disponibilidad + precio por slot
+    # 4) Generar slots teóricos y marcar disponibilidad
     slots: List[Dict[str, Any]] = []
     current = day_open
-    while current + timedelta(minutes=slot_minutes) <= day_close:
-        next_dt = current + timedelta(minutes=slot_minutes)
+    step = timedelta(minutes=slot_minutes)
 
-        # disponible si NO se solapa con ninguna booking
+    while current + step <= day_close:
+        next_dt = current + step
+
+        # Convención de solapamiento semiabierto: [start, end)
         is_free = True
         for bk in bookings:
-            # overlap si (current < bk.end) y (next_dt > bk.start)
             if current < bk.end_datetime and next_dt > bk.start_datetime:
                 is_free = False
                 break
 
-        # 5) buscar regla de precio que cubra COMPLETO el slot (si no hay, price=None)
+        # 5) Resolver precio: regla que cubra completamente el slot
         s_t, e_t = current.time(), next_dt.time()
-        price_rule: Price | None = db.execute(
+        price_rule: Optional[Price] = db.execute(
             select(Price).where(
                 and_(
                     Price.court_id == court_id,
@@ -79,6 +86,7 @@ def get_availability(
                     Price.end_time >= e_t,
                 )
             )
+            # .order_by(Price.priority.desc())   # si tenés un campo de prioridad
         ).scalar_one_or_none()
 
         slots.append({
@@ -86,13 +94,18 @@ def get_availability(
             "end": next_dt.isoformat(),
             "available": is_free,
             "price_per_slot": float(price_rule.price_per_slot) if price_rule else None,
-            "currency": "ARS",  # ajustá si manejás multi-moneda
+            "currency": "ARS",
         })
         current = next_dt
 
-    # (Opcional) si querés ocultar slots pasados cuando la consulta es “hoy”:
-    # now = datetime.now()
+    # (Opcional) Ocultar slots pasados si la fecha es hoy
+    # now = datetime.now(tz)  # si usás tz aware
     # if target_date == now.date():
     #     slots = [s for s in slots if datetime.fromisoformat(s["start"]) > now]
 
-    return {"court_id": court_id, "date": date_str, "slot_minutes": slot_minutes, "slots": slots}
+    return {
+        "court_id": court_id,
+        "date": date_str,
+        "slot_minutes": slot_minutes,
+        "slots": slots,
+    }

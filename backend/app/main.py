@@ -13,6 +13,8 @@ from .routers import venues
 from .routers import auth
 from .routers import schedules
 from .routers import bookings
+from .routers import availability
+from .routers import prices
 from app.routers import debug_email
 
 app = FastAPI(title="Reservas API")
@@ -34,6 +36,9 @@ app.include_router(venues.router)
 app.include_router(schedules.router)
 app.include_router(bookings.router)
 app.include_router(debug_email.router)
+app.include_router(availability.router)
+app.include_router(prices.router)
+
 
 @app.on_event("startup")
 def init_db():
