@@ -2,20 +2,36 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import select
-from app.deps import get_db, require_owner
+from app.deps import get_db, require_owner, get_current_user
 from app.models.venue import Venue
 from app.models.user import User
 from app.schemas.venue import VenueCreate, VenueUpdate, VenueOut
+from app.services.geocoding import geocode_nominatim
+
 
 router = APIRouter(prefix="/venues", tags=["venues"])
 
 @router.post("", response_model=VenueOut, status_code=status.HTTP_201_CREATED)
-def create_venue(
-    payload: VenueCreate,
-    db: Session = Depends(get_db),
-    current_owner: User = Depends(require_owner),
-):
-    venue = Venue(owner_user_id=current_owner.id, **payload.model_dump())
+async def create_venue(payload: VenueCreate, db: Session = Depends(get_db), user=Depends(get_current_user)):
+    # usar coords si vinieron; si no, geocodificar
+    lat, lng = payload.latitude, payload.longitude
+    if lat is None and lng is None:
+        coords = await geocode_nominatim(payload.address, payload.city)
+        if not coords:
+            raise HTTPException(
+                status_code=422,
+                detail="No se pudo geocodificar la dirección. Verifica address/city o envía latitude/longitude."
+            )
+        lat, lng = coords
+
+    venue = Venue(
+        name=payload.name,
+        address=payload.address,
+        city=payload.city,
+        latitude=lat,
+        longitude=lng,
+        owner_user_id=user.id,  # ajusta según tu auth
+    )
     db.add(venue)
     db.commit()
     db.refresh(venue)
@@ -50,23 +66,36 @@ def get_venue(
     return venue
 
 @router.patch("/{venue_id}", response_model=VenueOut)
-def update_venue(
-    venue_id: int,
-    payload: VenueUpdate,
-    db: Session = Depends(get_db),
-    current_owner: User = Depends(require_owner),
-):
+async def update_venue(venue_id: int, payload: VenueUpdate, db: Session = Depends(get_db), user=Depends(get_current_user)):
     venue = db.get(Venue, venue_id)
     if not venue:
         raise HTTPException(status_code=404, detail="Venue no encontrado")
-    if venue.owner_user_id != current_owner.id:
-        raise HTTPException(status_code=403, detail="No sos owner de este venue")
+    if venue.owner_user_id != user.id and user.role != "ADMIN":
+        raise HTTPException(status_code=403, detail="No autorizado")
 
-    data = payload.model_dump(exclude_unset=True)
-    for k, v in data.items():
-        setattr(venue, k, v)
+    # aplicar cambios simples
+    if payload.name is not None:
+        venue.name = payload.name
+    if payload.address is not None:
+        venue.address = payload.address
+    if payload.city is not None:
+        venue.city = payload.city
 
-    db.add(venue)
+    # coords explícitas tienen prioridad
+    if payload.latitude is not None and payload.longitude is not None:
+        venue.latitude = payload.latitude
+        venue.longitude = payload.longitude
+    else:
+        # si cambiaron address/city y NO enviaron coords nuevas, re-geocodificar
+        if payload.address is not None or payload.city is not None:
+            coords = await geocode_nominatim(venue.address, venue.city)
+            if coords:
+                venue.latitude, venue.longitude = coords
+            else:
+                # no hard-fail en update: mantenemos coords viejas si había,
+                # pero avisar con 422 si prefieres exigir éxito.
+                pass
+
     db.commit()
     db.refresh(venue)
     return venue

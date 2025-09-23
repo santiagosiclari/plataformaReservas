@@ -2,6 +2,7 @@
 from fastapi import FastAPI
 from app.db import Base, engine, SessionLocal
 from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
 from app import models  # asegura que los modelos estén importados
 import os
 
@@ -10,6 +11,9 @@ from .routers import users
 from .routers import courts
 from .routers import venues
 from .routers import auth
+from .routers import schedules
+from .routers import bookings
+from app.routers import debug_email
 
 app = FastAPI(title="Reservas API")
 
@@ -21,12 +25,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+load_dotenv()
 app.include_router(auth.router)
 app.include_router(health.router)
 app.include_router(users.router)
 app.include_router(courts.router)
 app.include_router(venues.router)
-
+app.include_router(schedules.router)
+app.include_router(bookings.router)
+app.include_router(debug_email.router)
 
 @app.on_event("startup")
 def init_db():

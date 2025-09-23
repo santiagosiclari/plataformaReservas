@@ -1,6 +1,6 @@
 from typing import List, Optional
 from datetime import datetime
-from sqlalchemy import String, DateTime, ForeignKey, func
+from sqlalchemy import String, DateTime, ForeignKey, func, Numeric
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db import Base
 
@@ -9,8 +9,11 @@ class Venue(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(120), nullable=False)
-    address: Mapped[Optional[str]] = mapped_column(String(255))
-    city: Mapped[Optional[str]] = mapped_column(String(120))
+    address: Mapped[str] = mapped_column(String(255), nullable=False)
+    city: Mapped[str] = mapped_column(String(120), nullable=False)
+
+    latitude: Mapped[Optional[float]] = mapped_column(Numeric(9, 6))
+    longitude: Mapped[Optional[float]] = mapped_column(Numeric(9, 6))
 
     owner_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=False)

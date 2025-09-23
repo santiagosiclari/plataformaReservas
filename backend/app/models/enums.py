@@ -10,6 +10,10 @@ class SportEnum(str, Enum):
     FOOTBALL = "FOOTBALL"
 
 class BookingStatusEnum(str, Enum):
-    CONFIRMED = "CONFIRMED"
-    CANCELLED = "CANCELLED"
-    CANCELLED_LATE = "CANCELLED_LATE"
+    PENDING = "PENDING"        # recién creada, a la espera de confirmación
+    CONFIRMED = "CONFIRMED"    # confirmada por OWNER (o pago en el futuro)
+    CANCELLED = "CANCELLED"    # cancelada a tiempo, sin penalidad
+    CANCELLED_LATE = "CANCELLED_LATE"  # cancelada fuera de plazo (puede implicar penalidad)
+    """ EXPIRED: nunca se confirmó y se venció el tiempo límite.
+    NO_SHOW: el usuario no se presentó.
+    REFUNDED: se procesó devolución tras confirmación y cancelación. """
