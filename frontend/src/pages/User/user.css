@@ -1,78 +1,86 @@
+/* ===================== USER PAGE FIX ===================== */
+
 .user-page {
-    display: grid;
-    gap: var(--space-4);
-    padding-block: var(--space-4);
-  }
-  
-  .user-card {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    padding: var(--space-4);
-  }
-  
-  .user-title {
-    margin: 0 0 var(--space-3);
-    font-size: 1.4rem;
-  }
-  
-  .section-title {
-    margin: 0 0 var(--space-2);
-    font-size: 1.1rem;
-  }
-  
-  .user-info p {
-    margin: .2rem 0;
-  }
-  
-  .booking-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: grid;
-    gap: var(--space-3);
-  }
-  
-  .booking-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: .75rem 1rem;
-    background: #151823;
-  }
-  
-  .booking-court {
-    font-weight: 600;
-    margin: 0 0 .25rem;
-  }
-  
-  .booking-time {
-    font-size: .9rem;
-    color: var(--muted);
-    margin: 0;
-  }
-  
-  .status {
-    font-size: .8rem;
-    font-weight: 600;
-    padding: .25rem .6rem;
-    border-radius: 999px;
-    text-transform: capitalize;
-  }
-  
-  .status.confirmed {
-    background: #123d28;
-    color: #4be28d;
-  }
-  .status.pending {
-    background: #443c22;
-    color: #ffdc6a;
-  }
-  .status.canceled {
-    background: #3d2227;
-    color: #ff8a92;
-  }
-  
+  display: grid;
+  gap: var(--space-4);
+  padding-block: var(--space-4);
+  color: var(--text);              /* 👈 texto global claro */
+}
+
+.user-card {
+  background: var(--surface);      /* 👈 igual que booking/search */
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: var(--space-4);
+}
+
+.user-title {
+  margin: 0 0 var(--space-3);
+  font-size: 1.4rem;
+  color: var(--text);
+}
+
+.section-title {
+  margin: 0 0 var(--space-2);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.user-info p {
+  margin: .2rem 0;
+  color: var(--muted);             /* 👈 para info secundaria */
+}
+
+.booking-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.booking-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: .75rem 1rem;
+  background: var(--panel);        /* 👈 más contraste */
+  color: var(--text);
+}
+
+.booking-court {
+  font-weight: 600;
+  margin: 0 0 .25rem;
+  color: var(--text);
+}
+
+.booking-time {
+  font-size: .9rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+/* Estados con más contraste y legibilidad */
+.status {
+  font-size: .8rem;
+  font-weight: 600;
+  padding: .25rem .6rem;
+  border-radius: 999px;
+  text-transform: capitalize;
+}
+.status.confirmed {
+  background: rgba(16, 185, 129, .2);  /* verde-emerald 500 translúcido */
+  color: #34d399;
+}
+.status.pending {
+  background: rgba(251, 191, 36, .2);  /* amber 400 translúcido */
+  color: #facc15;
+}
+.status.canceled {
+  background: rgba(239, 68, 68, .2);   /* rojo 500 translúcido */
+  color: #f87171;
+}

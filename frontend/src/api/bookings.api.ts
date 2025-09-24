@@ -82,12 +82,12 @@ export async function listBookings(params: ListBookingsParams = {}): Promise<Boo
   }
 
   export interface CreateBookingTopLevel {
-    user_id: number;
     court_id: number;
     start_datetime: string;
     end_datetime: string;
-    price_total: number;        // ← requerido por tu schema
-    status?: BookingStatus;     // ← opcional (default CONFIRMED en back)
+    price_total: number;       // requerido
+    status?: BookingStatus;    // opcional
+    user_id?: number;          // 👈 opcional (ni se manda)
   }
 
   export async function createBooking(body: CreateBookingTopLevel): Promise<Booking> {
@@ -136,7 +136,7 @@ export async function cancelBooking(bookingId: number, body: CancelBookingDTO = 
 // ---------------------------------
 // Convenience: current user's bookings
 // ---------------------------------
-export async function listMyBookings(params: Omit<ListBookingsParams, "user_id"> = {}): Promise<Booking[]> {
-  const { data } = await http.get(`/me/bookings`, { params });
+export async function listMyBookings(): Promise<Booking[]> {
+  const { data } = await http.get("/bookings", { params: { mine: true } });
   return data as Booking[];
 }

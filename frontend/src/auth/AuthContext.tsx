@@ -1,48 +1,52 @@
 // src/auth/AuthContext.tsx
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
 import { getMe } from "../api/auth.api";
-import { getAccessToken, clearAuthTokens } from "../api/http";
 
-type Ctx = { user: any | null; loading: boolean; setUser: (u:any|null)=>void; logout: ()=>void; };
-const AuthCtx = createContext<Ctx>({ user: null, loading: true, setUser: () => {}, logout: () => {} });
+type User = { id: number; email: string; name?: string; role?: string };
+type AuthState = { user: User | null; loading: boolean };
+type Ctx = AuthState & {
+  setUser: (u: User | null) => void;
+  logout: () => void;
+};
+
+const AuthCtx = createContext<Ctx | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<any|null>(null);
-  const [loading, setLoading] = useState(true);
-  const nav = useNavigate();
-  const loc = useLocation();
+  const [state, setState] = useState<AuthState>({ user: null, loading: true });
 
-  // hidratar sesión al montar
   useEffect(() => {
-    const t = getAccessToken();
-    if (!t) { setLoading(false); return; }
+    let cancelled = false;
+
     (async () => {
-      try { setUser(await getMe()); }
-      catch { setUser(null); }
-      finally { setLoading(false); }
+      try {
+        const me = await getMe();            // 200 -> usuario
+        if (!cancelled) setState({ user: me, loading: false });
+      } catch {
+        if (!cancelled) setState({ user: null, loading: false }); // ← importante
+      }
     })();
+
+    // si usás token en localStorage, escuchá cambios (logout en otra pestaña, etc.)
+    const onStorage = () => {
+      setState((s) => ({ ...s, loading: true }));
+      getMe().then(
+        (me) => setState({ user: me, loading: false }),
+        () => setState({ user: null, loading: false })
+      );
+    };
+    window.addEventListener("storage", onStorage);
+
+    return () => { cancelled = true; window.removeEventListener("storage", onStorage); };
   }, []);
 
-  // escuchar 401 del interceptor y redirigir SPA
-  useEffect(() => {
-    function onUnauthorized() {
-      clearAuthTokens();
-      setUser(null);
-      const next = encodeURIComponent(loc.pathname + loc.search);
-      nav(`/login?next=${next}`, { replace: true });
-    }
-    window.addEventListener("auth:unauthorized", onUnauthorized);
-    return () => window.removeEventListener("auth:unauthorized", onUnauthorized);
-  }, [loc.pathname, loc.search, nav]);
+  const setUser = (u: User | null) => setState({ user: u, loading: false });
+  const logout = () => { localStorage.removeItem("token"); setState({ user: null, loading: false }); };
 
-  function logout() {
-    clearAuthTokens();
-    setUser(null);
-    nav("/login", { replace: true });
-  }
-
-  return <AuthCtx.Provider value={{ user, loading, setUser, logout }}>{children}</AuthCtx.Provider>;
+  return <AuthCtx.Provider value={{ ...state, setUser, logout }}>{children}</AuthCtx.Provider>;
 }
 
-export const useAuth = () => useContext(AuthCtx);
+export function useAuth() {
+  const ctx = useContext(AuthCtx);
+  if (!ctx) throw new Error("useAuth must be used within <AuthProvider>");
+  return ctx;
+}

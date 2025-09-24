@@ -8,6 +8,7 @@ import {
 } from "../../api/courts.api";
 import { createBooking } from "../../api/bookings.api";
 import { getMe, isAuthenticated } from "../../api/auth.api";
+import { useAuth } from "../../auth/AuthContext"; // ← importar
 import "./booking.css";
 
 function fmtDate(d: string) {
@@ -29,6 +30,7 @@ const BookingPage: React.FC = () => {
   const slotsCountParam = params.get("slots");
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth(); // ← acá está el user si pasó RequireAuth
 
   // data
   const [court, setCourt] = useState<CourtDetailPublic | null>(null);
@@ -103,7 +105,7 @@ const BookingPage: React.FC = () => {
   }, [selection, slotsCountParam]);
 
   async function handleConfirm() {
-    if (!court || !selection) return;
+    if (!court || !selection || !user) return;
   
     if (!isAuthenticated()) {
       navigate("/login", { state: { from: location.pathname + location.search } });
@@ -114,13 +116,11 @@ const BookingPage: React.FC = () => {
     setErr(null);
   
     try {
-      const me = await getMe(); // <- necesitamos el user_id del backend
+      // Opción A (RECOMENDADA): el backend toma el user del token => NO mandes user_id
       const booking = await createBooking({
-        user_id: me.id,
         court_id: court.id,
         start_datetime: selection.start,
         end_datetime: selection.end,
-        // si el backend calcula precio, podés omitirlo
         price_total: Number(selection.totalPrice), // ← requerido (float > 0)
       });
   

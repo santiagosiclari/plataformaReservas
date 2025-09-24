@@ -163,3 +163,67 @@
     font-weight: 700;
   }
   
+  /* ========= FIX VISIBILIDAD SEARCH + PRECIOS ========= */
+
+/* 1) Variables mínimas de contraste (solo si tus --* no están definidos) */
+:root {
+  --surface: #121625;
+  --panel:   #0e1422;
+  --border:  rgba(255,255,255,.14);
+  --text:    #e7edf6;
+  --muted:   #9aa7b2;
+  --primary: #22d3ee;              /* acento */
+  --primary-contrast: #07141a;     /* texto sobre primario */
+}
+
+/* 2) Barra de búsqueda: más contraste, alto uniforme y placeholder visible */
+.search-input,
+.search-select {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text);
+  height: 44px;                    /* consistente */
+  line-height: 44px;
+}
+.search-input::placeholder {
+  color: var(--muted);
+  opacity: .95;
+}
+.search-input:focus,
+.search-select:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(34,211,238,.25); /* halo sutil */
+  border-color: rgba(34,211,238,.55);
+}
+
+/* 3) Cards: cuerpo más claro y footer con buen contraste */
+.court-card { background: var(--panel); border-color: var(--border); }
+.card-body  { color: var(--text); }
+.card-sub   { color: var(--muted); }
+
+/* 4) PRECIO: color acento y mayor peso */
+.card-footer .price {
+  color: var(--primary);
+  font-weight: 800;
+  letter-spacing: .2px;
+}
+
+/* 5) Botones: lectura y foco */
+.btn {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--border);
+}
+.btn:hover { background: #151a2a; }
+.btn-primary {
+  background: var(--primary);
+  color: var(--primary-contrast);
+}
+
+/* 6) Lista de slots y box en booking: subir contraste */
+.box,
+.slots-list li {
+  background: var(--surface);
+  border-color: var(--border);
+}
+.value, .total, .price { color: var(--text); }

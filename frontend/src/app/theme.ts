@@ -3,15 +3,33 @@ import { createTheme } from "@mui/material/styles";
 const theme = createTheme({
   palette: {
     mode: "light",
-    primary: {
-      main: "#1976d2", // azul MUI por defecto
+    primary: { main: "#2563eb" },
+    secondary: { main: "#14b8a6" },
+    background: {
+      default: "#ffffff",  // 👈 fondo de página MUI
+      paper: "#ffffff",    // 👈 fondos de <Paper/>
     },
-    secondary: {
-      main: "#9c27b0", // violeta
+    text: {
+      primary: "#0f172a",
+      secondary: "#475569",
     },
+    divider: "#e2e8f0",
   },
-  shape: {
-    borderRadius: 12,
+  typography: {
+    fontFamily: [
+      "system-ui","-apple-system","Segoe UI","Roboto","Ubuntu","Cantarell",
+      "Helvetica Neue","Arial","Noto Sans","Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol"
+    ].join(","),
+    button: { textTransform: "none", fontWeight: 700 },
+  },
+  shape: { borderRadius: 12 },
+  components: {
+    /* belt-and-suspenders: fuerza el body blanco con CssBaseline */
+    MuiCssBaseline: {
+      styleOverrides: {
+        body: { backgroundColor: "#ffffff" },
+      },
+    },
   },
 });
 

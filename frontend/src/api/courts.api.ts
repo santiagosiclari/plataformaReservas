@@ -43,13 +43,12 @@ export interface ListCourtsParams {
 // ---------------------------------
 // Venue-scoped endpoints (canonical)
 // ---------------------------------
-export async function listCourts(
-  venueId: number,
-  params: ListCourtsParams = {}
-): Promise<Court[]> {
+export async function listCourts(venueId: number, params: ListCourtsParams = {}): Promise<Court[]> {
   const { data } = await http.get(`/venues/${venueId}/courts`, { params });
   return data as Court[];
 }
+
+export const listCourtsByVenue = listCourts;
 
 export async function getCourt(venueId: number, courtId: number): Promise<Court> {
   const { data } = await http.get(`/venues/${venueId}/courts/${courtId}`);

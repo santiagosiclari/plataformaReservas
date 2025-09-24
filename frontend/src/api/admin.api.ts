@@ -9,6 +9,7 @@ const q = (params: Record<string, any>) =>
     const r = await fetch(`/venues?owned=1`, { headers: { "Content-Type": "application/json" }});
     return r.json();
   }
+
   
   export async function listCourtsByVenue(venueId: number) {
     const r = await fetch(`/venues/${venueId}/courts`, { headers: { "Content-Type": "application/json" }});
@@ -31,3 +32,8 @@ const q = (params: Record<string, any>) =>
     const r = await fetch(`/admin/stats/heatmap?${q(params)}`); return r.json();
   }
   
+  // PRICES (por court)
+  export async function listPrices(venueId: number, courtId: number) { /* GET /venues/:venueId/courts/:courtId/prices */ }
+  export async function createPrice(venueId: number, courtId: number, body: Partial<{ day_of_week: number | null; start_time: string; end_time: string; amount: number }>) { /* POST */ }
+  export async function updatePrice(venueId: number, courtId: number, priceId: number, body: Partial<{ day_of_week: number | null; start_time: string; end_time: string; amount: number }>) { /* PATCH */ }
+  export async function deletePrice(venueId: number, courtId: number, priceId: number) { /* DELETE */ }
