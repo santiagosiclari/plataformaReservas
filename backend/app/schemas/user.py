@@ -35,3 +35,17 @@ class UserOut(BaseModel):
 
 class UserRoleUpdate(BaseModel):
     role: RoleEnum
+
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    phone: Optional[str] = None
+
+    @field_validator("phone")
+    @classmethod
+    def validate_phone(cls, v: Optional[str]):
+        if not v:
+            return None
+        num = phonenumbers.parse(v, DEFAULT_REGION)
+        if not (phonenumbers.is_possible_number(num) and phonenumbers.is_valid_number(num)):
+            raise ValueError("Teléfono inválido")
+        return phonenumbers.format_number(num, phonenumbers.PhoneNumberFormat.E164)

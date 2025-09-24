@@ -4,12 +4,37 @@ from fastapi import APIRouter, Depends, status, HTTPException, Header
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from passlib.hash import bcrypt
-from app.deps import get_db, require_owner
+from app.deps import get_db, require_owner, get_current_user
 from app.models.user import User
 from app.models.enums import RoleEnum
-from app.schemas.user import UserCreate, UserOut, UserRoleUpdate
+from app.schemas.user import UserCreate, UserOut, UserRoleUpdate, UserUpdate
 
 router = APIRouter(prefix="/users", tags=["users"])
+
+
+@router.patch("/{user_id}", response_model=UserOut)
+def update_user_basic(
+    user_id: int,
+    payload: UserUpdate,
+    db: Session = Depends(get_db),
+    me: User = Depends(get_current_user),
+):
+    if me.id != user_id:
+        raise HTTPException(status_code=403, detail="No autorizado")
+    user = db.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    if payload.name is not None:
+        user.name = payload.name
+    if payload.phone is not None:
+        # reutilizá tu validador E164 si querés, o validá acá
+        user.phone = payload.phone
+
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
 
 @router.post("", response_model=UserOut, status_code=status.HTTP_201_CREATED)
 def create_user(

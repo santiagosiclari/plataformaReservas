@@ -136,12 +136,19 @@ http.interceptors.response.use(
       }
       // Refresh failed → clear and redirect
       clearAuthTokens();
-      redirectToLogin();
+      emitUnauthorized();     // ✅ avisamos al app
     }
 
     // 403/404/422 etc: let the caller handle it
     return Promise.reject(error);
   }
 );
+
+function emitUnauthorized() {
+  try {
+    window.dispatchEvent(new CustomEvent("auth:unauthorized"));
+  } catch {}
+}
+
 
 export default http;

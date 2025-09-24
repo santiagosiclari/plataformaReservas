@@ -1,11 +1,18 @@
+// src/pages/auth/LoginPage.tsx
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "./login.css";
 import { loginAndFetchMe } from "../../api/auth.api";
+// si usás AuthContext:
+// import { useAuth } from "../../auth/AuthContext";
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation() as { state?: { from?: string } };
+  const loc = useLocation(); // 👈 NO uses "location" como nombre de variable
+  const params = new URLSearchParams(loc.search);
+  const next = params.get("next") || "/";
+
+  // const { setUser } = useAuth(); // si tenés contexto
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,25 +25,18 @@ const LoginPage: React.FC = () => {
     setErrMsg(null);
     setLoading(true);
     try {
-      // Opción 1: flujo completo (token + usuario)
       const { me } = await loginAndFetchMe({ email, password });
 
-      // (Opcional) si tenés un AuthContext, podrías setear el usuario aquí:
-      // auth.setUser(me);
+      // si tenés contexto:
+      // setUser(me);
 
-      // Redirige al destino previo si venía de una ruta protegida, o al home
-      const dest = location.state?.from ?? "/";
-      navigate(dest, { replace: true });
+      // 👉 Volver a donde quería ir (usa ?next=)
+      navigate(next, { replace: true });
     } catch (err: any) {
-      // Manejo de errores común de FastAPI
       const status = err?.response?.status;
-      if (status === 401) {
-        setErrMsg("Credenciales inválidas. Verificá tu correo y contraseña.");
-      } else if (status === 422) {
-        setErrMsg("Datos inválidos. Revisá el formato del email.");
-      } else {
-        setErrMsg("No se pudo iniciar sesión. Intentá nuevamente.");
-      }
+      if (status === 401) setErrMsg("Credenciales inválidas. Verificá tu correo y contraseña.");
+      else if (status === 422) setErrMsg("Datos inválidos. Revisá el formato del email.");
+      else setErrMsg("No se pudo iniciar sesión. Intentá nuevamente.");
     } finally {
       setLoading(false);
     }
@@ -52,38 +52,21 @@ const LoginPage: React.FC = () => {
         <form className="login-form" onSubmit={handleSubmit} noValidate>
           <div className="form-group">
             <label htmlFor="email">Correo electrónico</label>
-            <input
-              id="email"
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              placeholder="ejemplo@correo.com"
-              disabled={loading}
-            />
+            <input id="email" type="email" autoComplete="email"
+              value={email} onChange={(e) => setEmail(e.target.value)}
+              required placeholder="ejemplo@correo.com" disabled={loading} />
           </div>
 
           <div className="form-group">
             <label htmlFor="password">Contraseña</label>
             <div className="input-with-action">
-              <input
-                id="password"
-                type={showPwd ? "text" : "password"}
-                autoComplete="current-password"
-                value={password}
+              <input id="password" type={showPwd ? "text" : "password"}
+                autoComplete="current-password" value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                required
-                placeholder="********"
-                disabled={loading}
-              />
-              <button
-                type="button"
-                className="btn btn-ghost small"
-                onClick={() => setShowPwd((s) => !s)}
-                aria-label={showPwd ? "Ocultar contraseña" : "Mostrar contraseña"}
-                disabled={loading}
-              >
+                required placeholder="********" disabled={loading} />
+              <button type="button" className="btn btn-ghost small"
+                onClick={() => setShowPwd((s) => !s)} aria-label={showPwd ? "Ocultar contraseña" : "Mostrar contraseña"}
+                disabled={loading}>
                 {showPwd ? "Ocultar" : "Ver"}
               </button>
             </div>

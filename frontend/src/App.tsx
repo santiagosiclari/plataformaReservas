@@ -10,6 +10,8 @@ import BookingConfirmationPage from "./pages/BookingConfirmation/BookingConfirma
 import UserPage from "./pages/User/UserPage";
 import LoginPage from "./pages/Login/LoginPage";
 import AdminDashboardPage from "./pages/Admin/AdminDashboardPage";
+import RequireAuth from "./auth/RequireAuth";
+import BookingsPage from "./pages/Booking/BookingPage";
 
 function App() {
   return (
@@ -23,6 +25,7 @@ function App() {
         <Route path="user" element={<UserPage />} />
         <Route path="login" element={<LoginPage />} />
         <Route path="admin" element={<AdminDashboardPage />} />
+        <Route path="/bookings" element={<RequireAuth><BookingsPage/></RequireAuth>}/>
         {/* fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>

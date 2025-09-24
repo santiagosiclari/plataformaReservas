@@ -14,3 +14,7 @@ class MeOut(BaseModel):
     name: str
     role: str
     model_config = ConfigDict(from_attributes=True)
+
+class ChangePwdIn(BaseModel):
+    current_password: str
+    new_password: str
