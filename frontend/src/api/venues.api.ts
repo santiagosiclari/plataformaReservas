@@ -82,7 +82,7 @@ export async function createVenue(body: VenueCreate): Promise<Venue> {
 }
 
 export async function updateVenue(venueId: number, body: VenueUpdate): Promise<Venue> {
-  const { data } = await http.put(`/venues/${venueId}`, body); // ✅ backticks
+  const { data } = await http.patch(`/venues/${venueId}`, body); // ← PATCH
   return data as Venue;
 }
 

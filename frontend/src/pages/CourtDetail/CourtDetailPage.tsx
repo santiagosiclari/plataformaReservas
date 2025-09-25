@@ -47,7 +47,7 @@ const CourtDetailPage: React.FC = () => {
     load();
   }, [courtId, date]);
 
-  // limpiar selección si cambia la fecha o los slots
+  // limpiar selección si cambia la fecha
   useEffect(() => {
     setAnchorIdx(null);
     setRangeEndIdx(null);
@@ -59,18 +59,17 @@ const CourtDetailPage: React.FC = () => {
     const b = Math.max(anchorIdx, rangeEndIdx);
     const slice = slots.slice(a, b + 1);
     if (slice.length === 0) return null;
-    // validar que todos estén libres
     if (slice.some((s) => !s.available)) return null;
 
     const startISO = slice[0].start;
     const endISO = slice[slice.length - 1].end;
-    // sumar precios (si están definidos)
+
     const priced = slice.filter((s) => typeof s.price_per_slot === "number") as Array<
       AvailabilitySlot & { price_per_slot: number }
     >;
     const total = priced.reduce((acc, s) => acc + s.price_per_slot, 0);
-
     const currency = priced[0]?.currency ?? "ARS";
+
     return {
       startISO,
       endISO,
@@ -84,21 +83,17 @@ const CourtDetailPage: React.FC = () => {
 
   function handleClickSlot(i: number) {
     const s = slots[i];
-    if (!s.available) return; // no seleccionamos ocupados
+    if (!s.available) return;
 
     if (anchorIdx == null) {
-      // primer click -> setea ancla
       setAnchorIdx(i);
       setRangeEndIdx(i);
       return;
     }
-    // segundo click (o más): proponemos rango [min,max]
     const a = Math.min(anchorIdx, i);
     const b = Math.max(anchorIdx, i);
     const slice = slots.slice(a, b + 1);
-    // si hay ocupados en el medio, no permitimos ese rango
     if (slice.some((x) => !x.available)) {
-      // si clickeó sobre el mismo ya seleccionado, reseteamos
       if (i === rangeEndIdx) {
         setAnchorIdx(null);
         setRangeEndIdx(null);
@@ -133,6 +128,12 @@ const CourtDetailPage: React.FC = () => {
   if (err) return <div className="court-detail alert error">{err}</div>;
   if (!court) return null;
 
+  // ⚠️ Calcular coords SOLO cuando court existe
+  if (!court) return null;
+  const lat = court.venue_latitude != null ? Number(court.venue_latitude) : NaN;
+  const lng = court.venue_longitude != null ? Number(court.venue_longitude) : NaN;
+  const hasCoords = Number.isFinite(lat) && Number.isFinite(lng);
+
   return (
     <div className="court-detail">
       <div className="court-header">
@@ -145,18 +146,6 @@ const CourtDetailPage: React.FC = () => {
           {court.indoor ? "Indoor" : "Outdoor"}
         </p>
       </div>
-
-      {court.lat && court.lng && (
-        <div className="map-placeholder">
-          <div className="pin">📍</div>
-          <div>
-            <strong>Ubicación</strong>
-            <div>
-              Lat: {court.lat.toFixed(5)} • Lng: {court.lng.toFixed(5)}
-            </div>
-          </div>
-        </div>
-      )}
 
       <div className="date-picker">
         <label>Fecha:</label>
@@ -217,9 +206,7 @@ const CourtDetailPage: React.FC = () => {
           return (
             <button
               key={i}
-              className={`slot ${s.available ? "free" : "busy"} ${
-                isInRange ? "selected" : ""
-              }`}
+              className={`slot ${s.available ? "free" : "busy"} ${isInRange ? "selected" : ""}`}
               onClick={() => handleClickSlot(i)}
               title={
                 s.available
@@ -241,6 +228,44 @@ const CourtDetailPage: React.FC = () => {
           );
         })}
       </div>
+
+      {/* Mini mapa de la venue seleccionada (OSM embebido, sin deps) */}
+      {hasCoords ? (
+  <div className="box">
+    <div className="label">Ubicación</div>
+    <div style={{ height: 240, width: "100%", borderRadius: 12, overflow: "hidden" }}>
+      <iframe
+        title="Mapa de la sede"
+        style={{ border: 0, width: "100%", height: "100%" }}
+        loading="lazy"
+        referrerPolicy="no-referrer-when-downgrade"
+        src={(() => {
+          const dLon = 0.005, dLat = 0.003;
+          const bbox = [
+            (lng - dLon).toFixed(6),
+            (lat - dLat).toFixed(6),
+            (lng + dLon).toFixed(6),
+            (lat + dLat).toFixed(6),
+          ].join(",");
+          return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lng}`;
+        })()}
+        allowFullScreen
+      />
+    </div>
+    {court.address && <div className="muted" style={{ marginTop: 8 }}>{court.address}</div>}
+    <a
+      className="btn-link"
+      href={`https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=15/${lat}/${lng}`}
+      target="_blank" rel="noreferrer" style={{ marginTop: 8, display: "inline-block" }}
+    >
+      Ver en mapa grande
+    </a>
+  </div>
+) : (
+  <div className="box"><div className="label">Ubicación</div>
+    <p className="muted">Esta sede aún no tiene coordenadas cargadas.</p>
+  </div>
+)}
     </div>
   );
 };

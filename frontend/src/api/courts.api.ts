@@ -112,8 +112,8 @@ export type CourtDetailPublic = {
   sport: Sport | string;         // backend puede devolver string
   surface?: string | null;
   indoor?: boolean;
-  lat?: number | null;
-  lng?: number | null;
+  venue_latitude?: number | null;
+  venue_longitude?: number | null;
   address?: string | null;
 };
 

@@ -7,8 +7,8 @@ import {
   type AvailabilitySlot,
 } from "../../api/courts.api";
 import { createBooking } from "../../api/bookings.api";
-import { getMe, isAuthenticated } from "../../api/auth.api";
-import { useAuth } from "../../auth/AuthContext"; // ← importar
+import { isAuthenticated } from "../../api/auth.api";
+import { useAuth } from "../../auth/AuthContext";
 import "./booking.css";
 
 function fmtDate(d: string) {
@@ -30,7 +30,7 @@ const BookingPage: React.FC = () => {
   const slotsCountParam = params.get("slots");
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth(); // ← acá está el user si pasó RequireAuth
+  const { user } = useAuth();
 
   // data
   const [court, setCourt] = useState<CourtDetailPublic | null>(null);
@@ -105,25 +105,25 @@ const BookingPage: React.FC = () => {
   }, [selection, slotsCountParam]);
 
   async function handleConfirm() {
-    if (!court || !selection || !user) return;
-  
+    if (!court || !selection) return;
+
     if (!isAuthenticated()) {
       navigate("/login", { state: { from: location.pathname + location.search } });
       return;
     }
-  
+
     setSubmitting(true);
     setErr(null);
-  
+
     try {
-      // Opción A (RECOMENDADA): el backend toma el user del token => NO mandes user_id
+      // El backend toma el user del token
       const booking = await createBooking({
         court_id: court.id,
         start_datetime: selection.start,
         end_datetime: selection.end,
-        price_total: Number(selection.totalPrice), // ← requerido (float > 0)
+        price_total: Number(selection.totalPrice), // requerido
       });
-  
+
       navigate(`/booking/confirmation/${booking.id}`);
     } catch (e: any) {
       console.error(e);
@@ -135,7 +135,6 @@ const BookingPage: React.FC = () => {
       setSubmitting(false);
     }
   }
-
 
   // UI
   if (loading) return <div className="booking-page">Cargando…</div>;

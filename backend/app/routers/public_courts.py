@@ -1,7 +1,8 @@
+# app/routers/public_courts.py
 from typing import Optional, List, Dict, Any
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import select, func, or_, and_
+from sqlalchemy import select, func, or_
 from app.deps import get_db
 from app.models.court import Court
 from app.models.venue import Venue
@@ -74,6 +75,7 @@ def search_courts(
     results: List[Dict[str, Any]] = []
     for r in rows:
         m = r._mapping
+
         # Hint de precio: primera regla disponible (ajustá a tu criterio)
         price_hint = db.execute(
             select(Price.price_per_slot)
@@ -82,18 +84,21 @@ def search_courts(
             .limit(1)
         ).scalar_one_or_none()
 
+        lat_val = float(m["latitude"]) if m["latitude"] is not None else None
+        lng_val = float(m["longitude"]) if m["longitude"] is not None else None
+
         results.append({
             "id": m["court_id"],
             "venue_id": m["venue_id"],
             "venue_name": m["venue_name"],
             "court_name": f"Cancha {m['court_number']}" if m["court_number"] else "Cancha",
-            "sport": m["sport"],
+            "sport": str(m["sport"]),
             "surface": m["surface"],
             "indoor": m["indoor"],
-            "lat": m["latitude"],
-            "lng": m["longitude"],
+            "lat": lat_val,
+            "lng": lng_val,
             "address": m["address"],
-            "distance_km": float(m["distance_km"]) if distance_col is not None else None,
+            "distance_km": float(m["distance_km"]) if distance_col is not None and m.get("distance_km") is not None else None,
             "price_hint": float(price_hint) if price_hint is not None else None,
             "photo_url": None,  # si luego agregás fotos
         })
@@ -108,22 +113,33 @@ def get_court_public(court_id: int, db: Session = Depends(get_db)) -> Dict[str, 
             Court.sport, Court.surface, Court.indoor,
             Venue.id.label("venue_id"),
             Venue.name.label("venue_name"),
-            Venue.address, Venue.latitude, Venue.longitude
-        ).join(Venue, Venue.id == Court.venue_id)
-         .where(Court.id == court_id)
+            Venue.address,
+            Venue.latitude,   # puede ser Decimal
+            Venue.longitude,  # puede ser Decimal
+        )
+        .join(Venue, Venue.id == Court.venue_id)
+        .where(Court.id == court_id)
     ).mappings().first()
+
     if not row:
-        from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="Court no encontrado")
+
+    lat = float(row["latitude"]) if row["latitude"] is not None else None
+    lng = float(row["longitude"]) if row["longitude"] is not None else None
 
     return {
         "id": row["court_id"],
         "venue_id": row["venue_id"],
         "venue_name": row["venue_name"],
         "court_name": f"Cancha {row['court_number']}" if row["court_number"] else "Cancha",
-        "sport": row["sport"],
+        "sport": str(row["sport"]),
         "surface": row["surface"],
         "indoor": row["indoor"],
-        "latitude": row["latitude"], "longitude": row["longitude"],
         "address": row["address"],
+        # ✅ nombres que espera el front
+        "venue_latitude": lat,
+        "venue_longitude": lng,
+        # (opcional) compatibilidad hacia atrás
+        "latitude": lat,
+        "longitude": lng,
     }

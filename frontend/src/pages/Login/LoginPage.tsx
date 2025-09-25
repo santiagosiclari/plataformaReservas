@@ -3,8 +3,7 @@ import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "./login.css";
 import { loginAndFetchMe } from "../../api/auth.api";
-// si usás AuthContext:
-// import { useAuth } from "../../auth/AuthContext";
+import { useAuth } from "../../auth/AuthContext";
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -12,7 +11,7 @@ const LoginPage: React.FC = () => {
   const params = new URLSearchParams(loc.search);
   const next = params.get("next") || "/";
 
-  // const { setUser } = useAuth(); // si tenés contexto
+  const { setUser } = useAuth(); // si tenés contexto
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,7 +27,7 @@ const LoginPage: React.FC = () => {
       const { me } = await loginAndFetchMe({ email, password });
 
       // si tenés contexto:
-      // setUser(me);
+      setUser(me);
 
       // 👉 Volver a donde quería ir (usa ?next=)
       navigate(next, { replace: true });
