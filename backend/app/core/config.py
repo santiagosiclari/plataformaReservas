@@ -8,7 +8,12 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     REFRESH_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7
 
-    JWT_LEEWAY_SECONDS: int = 30
+    CORS_ORIGINS: str | None = None
+
+    # --- Opcionales que te faltan ---
+    JWT_ISSUER: str | None = None
+    JWT_AUDIENCE: str | None = None
+    JWT_LEEWAY_SECONDS: int = 30   # un poco de margen por reloj/nbf
     API_PREFIX: str = "/api/v1"
 
     # DB

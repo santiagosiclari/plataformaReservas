@@ -176,6 +176,6 @@ export async function getAvailabilityPublic(
 }
 
 export async function searchCourtsPublic(params: SearchCourtsParams) {
-  const { data } = await http.get<CourtSearchResult[]>(`/courts/search`, { params });
+  const { data } = await http.get<CourtSearchResult[]>(`/venues/courts/search`, { params });
   return data;
 }
