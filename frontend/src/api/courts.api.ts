@@ -161,7 +161,7 @@ export type SearchCourtsParams = {
 
 // ---- funciones públicas ----
 export async function getCourtPublic(courtId: number): Promise<CourtDetailPublic> {
-  const { data } = await http.get<CourtDetailPublic>(`/courts/${courtId}`);
+  const { data } = await http.get<CourtDetailPublic>(`/venues/courts/${courtId}`);
   return data;
 }
 

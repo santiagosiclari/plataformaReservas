@@ -26,7 +26,7 @@ export type SearchCourtsParams = {
 };
 
 export async function searchCourts(params: SearchCourtsParams) {
-  const { data } = await http.get<CourtSearchResult[]>("/courts/search", {
+  const { data } = await http.get<CourtSearchResult[]>("/venues/courts/search", {
     params,
   });
   return data;
