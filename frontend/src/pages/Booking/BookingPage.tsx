@@ -121,7 +121,6 @@ const BookingPage: React.FC = () => {
         court_id: court.id,
         start_datetime: selection.start,
         end_datetime: selection.end,
-        price_total: Number(selection.totalPrice), // requerido
       });
 
       navigate(`/booking/confirmation/${booking.id}`);
