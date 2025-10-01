@@ -51,3 +51,13 @@ export async function loginAndFetchMe(body: LoginRequest): Promise<{ token: Toke
   const me = await getMe();
   return { token, me };
 }
+export async function registerUser(body: {
+  name: string;
+  email: string;
+  phone?: string;
+  password: string;
+}) {
+  const { data } = await http.post("/auth/register", body);
+  return data;
+}
+

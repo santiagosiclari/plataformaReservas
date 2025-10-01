@@ -6,7 +6,7 @@ from app.core.db import Base
 
 from sqlalchemy import String, Boolean, Text, ForeignKey, Enum as SAEnum, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.shared.enums import SportEnum
+from app.shared.enums import SportEnum, SurfaceEnum
 
 class Venue(Base):
     __tablename__ = "venues"
@@ -42,7 +42,7 @@ class Court(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     venue_id: Mapped[int] = mapped_column(ForeignKey("venues.id"), nullable=False, index=True)
     sport: Mapped[SportEnum] = mapped_column(SAEnum(SportEnum), nullable=False)
-    surface: Mapped[Optional[str]] = mapped_column(String(60))
+    surface: Mapped[SurfaceEnum] = mapped_column(SAEnum(SurfaceEnum))
     indoor: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     number: Mapped[Optional[str]] = mapped_column(String(20))
     notes: Mapped[Optional[str]] = mapped_column(Text)

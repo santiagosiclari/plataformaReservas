@@ -1,0 +1,102 @@
+/* ================== ADMIN BASE ================== */
+.admin-page { display: grid; gap: 16px; padding: 16px; grid-template-columns: 280px 1fr; }
+.panel, .card { background: #0f1115; border: 1px solid #2a2f3a; border-radius: 12px; padding: 12px; }
+.panel-header { font-weight: 700; margin-bottom: 8px; }
+.section-title { margin: 0 0 6px; font-size: 14px; color: #c8d1e1; }
+
+.btn { background: #1e2633; border: 1px solid #2a3445; color: #e6edf7; padding: 6px 10px; border-radius: 8px; }
+.btn:hover { background: #283246; }
+.btn-ghost { background: transparent; border-color: #2a3445; }
+.btn-ghost:hover { background: rgba(255,255,255,.04); }
+
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.form-grid label { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: #aeb7c6; }
+.form-grid input, .form-grid select, .form-grid textarea {
+  background: #0b0e13; border: 1px solid #2a2f3a; color: #e6edf7; border-radius: 8px; padding: 8px;
+}
+.form-actions { display: flex; gap: 8px; }
+
+.list .chip { background: #151a22; border: 1px solid #2a2f3a; color: #c8d1e1; padding: 6px 10px; border-radius: 999px; }
+.list .chip.active { background: #2a3445; color: #fff; border-color: #3a4760; }
+
+.error { background: #35121a; color: #f5a6b3; border: 1px solid #5a1e2b; padding: 8px; border-radius: 8px; }
+
+.row { display: flex; align-items: center; gap: 8px; }
+
+/* ================== TABLAS ================== */
+.table-wrap { overflow: auto; max-height: 360px; border-radius: 8px; }
+.top-table th {
+  color: #c8d1e1;
+  font-weight: 600;
+  background: #0f1115;
+}
+.top-table td { color: #e6edf7; }
+.top-table tbody tr:nth-child(odd) { background: rgba(255,255,255,.03); }
+.top-table tbody tr:hover { background: rgba(255,255,255,.06); }
+
+.price-cell {
+  font-weight: 700;
+  font-size: 15px;
+  text-align: right;
+  color: #6cf; /* resalta precios */
+}
+.price-input { font-size: 18px; font-weight: 700; }
+
+/* ================== COURTS ================== */
+.court-selector h3,
+.court-selector .section-title,
+.court-selector .court-title {
+  color: #c8d1e1;
+  font-weight: 600;
+}
+
+.court-selector button {
+  background: #111;
+  border: 1px solid #333;
+  border-radius: 8px;
+  color: #e6edf7;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+.court-selector button:hover { background: #1a1d24; border-color: #6cf; }
+.court-selector button.active {
+  background: #6cf; border-color: #6cf;
+  color: #000; font-weight: 700;
+}
+
+.court-selector .court-label {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: #222;
+  color: #e6edf7;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+.court-selector .list button:hover { background: rgba(255,255,255,0.05); }
+.court-selector .selected-court {
+  margin-bottom: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #6cf;
+}
+
+/* ================== SCHEDULES ================== */
+.schedules-editor h3,
+.schedules-editor .section-title {
+  color: #c8d1e1;
+  font-weight: 600;
+}
+
+.schedules-editor table th { color: #c8d1e1; background: #0f1115; }
+.schedules-editor table td { color: #e6edf7; }
+
+.schedules-editor tbody tr:nth-child(odd) { background: rgba(255,255,255,.03); }
+.schedules-editor tbody tr:hover { background: rgba(255,255,255,.06); }
+
+.schedules-editor .slot-cell {
+  font-weight: 600;
+  color: #9cf;
+  text-align: right;
+}

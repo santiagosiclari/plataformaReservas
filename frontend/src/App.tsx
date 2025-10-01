@@ -15,6 +15,8 @@ import BookingsPage from "./pages/Booking/BookingsPage";
 
 import UserPage from "./pages/User/UserPage";
 import LoginPage from "./pages/Login/LoginPage";
+import RegisterPage from "./pages/Register/RegisterPage";
+
 
 import AdminDashboardPage from "./pages/Admin/AdminDashboardPage";
 import AdminManagePage from "./pages/Admin/AdminManagePage";
@@ -31,6 +33,7 @@ function App() {
         <Route path="search" element={<SearchPage />} />
         <Route path="courts/:courtId" element={<CourtDetailPage />} />
         <Route path="login" element={<LoginPage />} />
+        <Route path="register" element={<RegisterPage />} />
 
         {/* booking (singular) - puede estar protegida si querés que solo reserven logueados */}
         <Route

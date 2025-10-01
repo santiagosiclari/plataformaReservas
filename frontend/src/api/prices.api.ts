@@ -54,7 +54,10 @@ export async function createPrice(
   courtId: number,
   body: CreatePriceDTO
 ): Promise<Price> {
-  const { data } = await http.post(basePath(venueId, courtId), body);
+  const payload = { ...body, court_id: courtId };
+  (payload as any).price_per_slot = Number(payload.price_per_slot);
+
+  const { data } = await http.post(basePath(venueId, courtId), payload);
   return normalize(data);
 }
 
@@ -65,7 +68,12 @@ export async function updatePrice(
   priceId: number,
   body: UpdatePriceDTO
 ): Promise<Price> {
-  const { data } = await http.patch(`${basePath(venueId, courtId)}/${priceId}`, body);
+  const payload = { ...body, court_id: courtId };
+  if (payload.price_per_slot != null) {
+    (payload as any).price_per_slot = Number(payload.price_per_slot);
+  }
+
+  const { data } = await http.patch(`${basePath(venueId, courtId)}/${priceId}`, payload);
   return normalize(data);
 }
 

@@ -1,0 +1,126 @@
+/* Reutilizamos la base del login */
+.register-page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: #0f1115;
+    padding: 20px;
+  }
+  
+  .register-card {
+    background: #161a21;
+    border: 1px solid #2a2f3a;
+    border-radius: 12px;
+    padding: 28px;
+    max-width: 400px;
+    width: 100%;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+  }
+  
+  .register-title {
+    margin: 0 0 20px;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #e6edf7;
+    text-align: center;
+  }
+  
+  /* formulario */
+  .register-form {
+    display: grid;
+    gap: 14px;
+  }
+  
+  .register-form .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  
+  .register-form label {
+    font-size: 13px;
+    color: #aeb7c6;
+  }
+  
+  .register-form input {
+    background: #0b0e13;
+    border: 1px solid #2a2f3a;
+    border-radius: 8px;
+    padding: 10px;
+    color: #e6edf7;
+    font-size: 14px;
+  }
+  
+  .register-form input:focus {
+    outline: none;
+    border-color: #6cf;
+    box-shadow: 0 0 0 2px rgba(102,204,255,0.2);
+  }
+  
+  /* Contraseña con botón "Ver" */
+  .input-with-action {
+    display: flex;
+    align-items: center;
+  }
+  
+  .input-with-action input {
+    flex: 1;
+    border-radius: 8px 0 0 8px;
+  }
+  
+  .input-with-action button {
+    border-radius: 0 8px 8px 0;
+    padding: 0 12px;
+    font-size: 12px;
+    height: 38px;
+  }
+  
+  /* Botón principal */
+  .btn-primary {
+    background: #6cf;
+    border: none;
+    color: #000;
+    font-weight: 600;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  
+  .btn-primary:hover {
+    background: #4bb8e6;
+  }
+  
+  .btn-primary:disabled {
+    background: #2a2f3a;
+    cursor: not-allowed;
+  }
+  
+  /* Link inferior */
+  .register-extra {
+    margin-top: 16px;
+    text-align: center;
+    font-size: 13px;
+  }
+  
+  .register-extra a {
+    color: #6cf;
+    text-decoration: none;
+  }
+  
+  .register-extra a:hover {
+    text-decoration: underline;
+  }
+  
+  /* Errores */
+  .alert.error {
+    background: #35121a;
+    color: #f5a6b3;
+    border: 1px solid #5a1e2b;
+    padding: 8px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-bottom: 12px;
+  }
+  

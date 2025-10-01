@@ -5,7 +5,7 @@ from sqlalchemy import and_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.core.deps import get_db, get_current_user, require_roles  # ajusta si usas require_roles
+from app.core.deps import get_db, get_current_user, require_roles
 from app.domains.venues.models import Court
 from app.domains.schedules.models import CourtSchedule
 from app.domains.schedules.schemas import CourtScheduleCreate, CourtScheduleUpdate, CourtScheduleOut

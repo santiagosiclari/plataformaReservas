@@ -6,9 +6,8 @@ from sqlalchemy.exc import IntegrityError
 from app.core.deps import get_db, get_current_user, require_owner, require_roles
 from app.shared.integrations.geocoding import geocode_nominatim
 
-# REVISAR DESPUES
 from app.domains.venues.schemas import CourtCreate, CourtUpdate, CourtOut, VenueCreate, VenueUpdate, VenueOut
-from app.domains.venues.models import Venue
+from app.domains.venues.models import Venue, Court
 from app.domains.users.models import User
 
 router = APIRouter(prefix="/{venue_id}/courts", tags=["courts"])
