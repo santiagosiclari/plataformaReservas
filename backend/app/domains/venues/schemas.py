@@ -1,6 +1,6 @@
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator, HttpUrl
 from app.shared.enums import SportEnum, SurfaceEnum
 
 class VenueBase(BaseModel):
@@ -34,10 +34,54 @@ class VenueUpdate(BaseModel):
             raise ValueError("Si envías coordenadas, deben incluir BOTH latitude y longitude.")
         return self
 
+class VenuePhotoBase(BaseModel):
+    url: HttpUrl
+    is_cover: bool = False
+    sort_order: int = 0
+    alt_text: Optional[str] = None
+
+class VenuePhotoOut(VenuePhotoBase):
+    id: int
+    venue_id: int
+    model_config = ConfigDict(from_attributes=True)
+
 class VenueOut(VenueBase):
     id: int
     owner_user_id: int
     created_at: datetime
+    photos: List[VenuePhotoOut] = []   # 👈 anidado
+    model_config = ConfigDict(from_attributes=True)
+
+    # ——— Photos ———
+
+class VenuePhotoCreate(VenuePhotoBase):
+    pass
+
+class VenuePhotoUpdate(BaseModel):
+    url: Optional[HttpUrl] = None
+    is_cover: Optional[bool] = None
+    sort_order: Optional[int] = None
+    alt_text: Optional[str] = None
+
+
+class CourtPhotoBase(BaseModel):
+    url: HttpUrl
+    is_cover: bool = False
+    sort_order: int = 0
+    alt_text: Optional[str] = None
+
+class CourtPhotoCreate(CourtPhotoBase):
+    pass
+
+class CourtPhotoUpdate(BaseModel):
+    url: Optional[HttpUrl] = None
+    is_cover: Optional[bool] = None
+    sort_order: Optional[int] = None
+    alt_text: Optional[str] = None
+
+class CourtPhotoOut(CourtPhotoBase):
+    id: int
+    court_id: int
     model_config = ConfigDict(from_attributes=True)
 
 class CourtBase(BaseModel):
@@ -84,6 +128,7 @@ class CourtCreate(CourtBase):
 class CourtOut(CourtBase):
     id: int
     venue_id: int
+    photos: List[CourtPhotoOut] = []   # 👈 anidado
     model_config = ConfigDict(from_attributes=True)
 
 class CourtUpdate(BaseModel):

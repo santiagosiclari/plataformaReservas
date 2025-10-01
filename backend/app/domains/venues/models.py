@@ -1,6 +1,6 @@
 from typing import List, Optional
 from datetime import datetime
-from sqlalchemy import String, DateTime, ForeignKey, func, Numeric
+from sqlalchemy import String, DateTime, ForeignKey, func, Numeric, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.db import Base
 
@@ -21,7 +21,6 @@ class Venue(Base):
 
     owner_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=False)
-
     owner: Mapped["User"] = relationship(
         "User",
         back_populates="owned_venues",
@@ -29,6 +28,9 @@ class Venue(Base):
     )
 
     courts: Mapped[List["Court"]] = relationship(back_populates="venue", cascade="all, delete-orphan")
+    photos: Mapped[List["VenuePhoto"]] = relationship(
+        "VenuePhoto", back_populates="venue", cascade="all, delete-orphan", order_by="VenuePhoto.sort_order"
+    )
 
     def __repr__(self) -> str:
         return f"<Venue id={self.id} name={self.name!r}>"
@@ -51,6 +53,31 @@ class Court(Base):
     schedules: Mapped[List["CourtSchedule"]] = relationship(back_populates="court", cascade="all, delete-orphan")
     prices: Mapped[List["Price"]] = relationship(back_populates="court", cascade="all, delete-orphan")
     bookings: Mapped[List["Booking"]] = relationship(back_populates="court", cascade="all, delete-orphan")
+    photos: Mapped[List["CourtPhoto"]] = relationship(
+        "CourtPhoto", back_populates="court", cascade="all, delete-orphan", order_by="CourtPhoto.sort_order"
+    )
 
     def __repr__(self) -> str:
         return f"<Court id={self.id} venue_id={self.venue_id} sport={self.sport}>"
+
+class VenuePhoto(Base):
+    __tablename__ = "venue_photos"
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    venue_id: Mapped[int] = mapped_column(ForeignKey("venues.id", ondelete="CASCADE"), index=True, nullable=False)
+    url: Mapped[str] = mapped_column(String(600), nullable=False)
+    is_cover: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    sort_order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    alt_text: Mapped[Optional[str]] = mapped_column(String(255))
+
+    venue: Mapped["Venue"] = relationship("Venue", back_populates="photos")
+
+class CourtPhoto(Base):
+    __tablename__ = "court_photos"
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    court_id: Mapped[int] = mapped_column(ForeignKey("courts.id", ondelete="CASCADE"), index=True, nullable=False)
+    url: Mapped[str] = mapped_column(String(600), nullable=False)
+    is_cover: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    sort_order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    alt_text: Mapped[Optional[str]] = mapped_column(String(255))
+
+    court: Mapped["Court"] = relationship("Court", back_populates="photos")

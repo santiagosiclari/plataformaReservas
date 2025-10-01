@@ -1,11 +1,12 @@
+#venues/public
 from typing import Optional, List, Dict, Any
 from fastapi import APIRouter, Depends, Query, HTTPException
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
-from sqlalchemy import select, func, or_
+from sqlalchemy import select, func, or_, case
 
 from app.core.deps import get_db
-from app.domains.venues.models import Venue, Court
+from app.domains.venues.models import Venue, Court, CourtPhoto
 from app.domains.pricing.models import Price
 from pydantic import BaseModel
 
@@ -34,6 +35,18 @@ def search_courts(
     limit: int = Query(24, ge=1, le=100),
     db: Session = Depends(get_db),
 ) -> List[Dict[str, Any]]:
+    cover_sq = (
+    select(CourtPhoto.url)
+    .where(CourtPhoto.court_id == Court.id)
+    .order_by(
+        case((CourtPhoto.is_cover == True, 0), else_=1),
+        CourtPhoto.sort_order.asc(),
+        CourtPhoto.id.asc(),
+    )
+    .limit(1)
+    .correlate(Court)
+    .scalar_subquery()
+)
     stmt = (
         select(
             Court.id.label("court_id"),
@@ -42,6 +55,7 @@ def search_courts(
             Venue.id.label("venue_id"),
             Venue.name.label("venue_name"),
             Venue.address, Venue.latitude, Venue.longitude,
+            cover_sq.label("cover_url"),     # 👈 portada
         )
         .join(Venue, Venue.id == Court.venue_id)
     )
@@ -96,7 +110,7 @@ def search_courts(
             "address": m["address"],
             "distance_km": float(m["distance_km"]) if distance_col is not None and m.get("distance_km") is not None else None,
             "price_hint": float(price_hint) if price_hint is not None else None,
-            "photo_url": None,
+            "photo_url": m["cover_url"],
         })
     return results
 
@@ -122,6 +136,12 @@ def get_court_public(court_id: int, db: Session = Depends(get_db)) -> Dict[str, 
     lat = float(row["latitude"]) if row["latitude"] is not None else None
     lng = float(row["longitude"]) if row["longitude"] is not None else None
 
+    photos = db.execute(
+        select(CourtPhoto.id, CourtPhoto.url, CourtPhoto.is_cover, CourtPhoto.sort_order, CourtPhoto.alt_text)
+        .where(CourtPhoto.court_id == row["court_id"])
+        .order_by(CourtPhoto.sort_order.asc(), CourtPhoto.id.asc())
+    ).all()
+
     return {
         "id": row["court_id"],
         "venue_id": row["venue_id"],
@@ -135,6 +155,15 @@ def get_court_public(court_id: int, db: Session = Depends(get_db)) -> Dict[str, 
         "venue_longitude": lng,
         "latitude": lat,     # compat
         "longitude": lng,    # compat
+        "photos": [
+            {
+                "id": p.id,
+                "url": p.url,
+                "is_cover": p.is_cover,
+                "sort_order": p.sort_order,
+                "alt_text": p.alt_text,
+            } for p in photos
+        ],
     }
 
 # -------- Venues públicos --------

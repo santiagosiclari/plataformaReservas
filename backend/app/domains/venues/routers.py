@@ -7,8 +7,9 @@ from app.core.deps import get_db, get_current_user, require_owner, require_roles
 from app.shared.integrations.geocoding import geocode_nominatim
 
 # REVISAR DESPUES
-from app.domains.venues.schemas import CourtCreate, CourtUpdate, CourtOut, VenueCreate, VenueUpdate, VenueOut
-from app.domains.venues.models import Venue
+from .courts_photos_private import router as court_photos_private_router  # 👈 nuevo
+from app.domains.venues.schemas import CourtCreate, CourtUpdate, CourtOut, VenueCreate, VenueUpdate, VenueOut, VenuePhotoCreate, VenuePhotoOut, VenuePhotoUpdate
+from app.domains.venues.models import Venue, VenuePhoto
 from app.domains.users.models import User
 
 from . import private as _private   # tu archivo con CRUD owner (/venues, /{venue_id}, /{venue_id}/courts)
@@ -123,3 +124,4 @@ def delete_venue(
 
 router.include_router(_private.router)         # /venues/* (owner)
 router.include_router(_public.router)          # /venues/public/* y /venues/courts/search etc.
+router.include_router(court_photos_private_router)     # /venues/{venue_id}/courts/{court_id}/photos (owner)
