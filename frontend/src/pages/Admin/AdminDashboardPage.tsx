@@ -8,7 +8,7 @@ import {
   getTop,
   getHeatmap,
 } from "../../api/admin.api";
-import "./admin.css";
+import "./adminDashboard.css";
 // Excel export (SheetJS)
 import * as XLSX from "xlsx";
 

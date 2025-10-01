@@ -7,7 +7,7 @@ import http from "./http";
 // ---------------------------------
 // Types
 // ---------------------------------
-export type BookingStatus = "PENDING" | "CONFIRMED" | "CANCELLED" | string; // allow backend extras
+export type BookingStatus = "PENDING" | "CONFIRMED" | "CANCELLED" | "CANCELLED_LATE" | string; // allow backend extras
 
 export interface Booking {
   id: number;
@@ -22,10 +22,10 @@ export interface Booking {
 }
 
 export interface CreateBookingDTO {
-  start_datetime: string; // ISO8601, e.g. "2025-09-24T15:00:00"
+  court_id: number;
+  start_datetime: string; // ISO8601 (alineado al slot)
   end_datetime: string;   // ISO8601
-  // price_total can be optional if backend calculates pricing
-  price_total?: string | number;
+  status?: BookingStatus; // opcional; el server default = CONFIRMED
 }
 
 export interface UpdateBookingDTO {
@@ -90,7 +90,7 @@ export async function listBookings(params: ListBookingsParams = {}): Promise<Boo
     user_id?: number;          // 👈 opcional (ni se manda)
   }
 
-  export async function createBooking(body: CreateBookingTopLevel): Promise<Booking> {
+  export async function createBooking(body: CreateBookingDTO): Promise<Booking> {
     const { data } = await http.post(`/bookings`, body);
     return data as Booking;
   }
@@ -104,7 +104,7 @@ export async function getBooking(bookingId: number): Promise<Booking> {
 }
 
 export async function updateBooking(bookingId: number, body: UpdateBookingDTO): Promise<Booking> {
-  const { data } = await http.put(`/bookings/${bookingId}`, body);
+  const { data } = await http.patch(`/bookings/${bookingId}`, body);
   return data as Booking;
 }
 

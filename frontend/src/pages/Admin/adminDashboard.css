@@ -1,0 +1,177 @@
+/* ================== ADMIN DASHBOARD ================== */
+.admin-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+
+/* Header + filtros */
+.admin-header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.admin-header h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #e6edf7;
+}
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+.filters label {
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+  color: #aeb7c6;
+}
+.filters input,
+.filters select {
+  background: #0b0e13;
+  border: 1px solid #2a2f3a;
+  color: #e6edf7;
+  border-radius: 8px;
+  padding: 6px 8px;
+}
+.export-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.export-split {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* Summary cards */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px,1fr));
+  gap: 12px;
+}
+.cards .card {
+  background: #0f1115;
+  border: 1px solid #2a2f3a;
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.card-title {
+  font-size: 12px;
+  color: #aeb7c6;
+}
+.card-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #6cf;
+}
+
+/* Panels (charts, top, heatmap) */
+.panels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.panel {
+  background: #0f1115;
+  border: 1px solid #2a2f3a;
+  border-radius: 12px;
+  padding: 12px;
+}
+.panel-header {
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #c8d1e1;
+}
+
+/* Top table */
+.top-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.top-table th {
+  text-align: left;
+  padding: 6px 8px;
+  font-size: 13px;
+  color: #c8d1e1;
+  font-weight: 600;
+  background: #0f1115;
+}
+.top-table td {
+  padding: 6px 8px;
+  font-size: 14px;
+  color: #e6edf7;
+}
+.top-table tbody tr:nth-child(odd) {
+  background: rgba(255,255,255,.03);
+}
+.top-table tbody tr:hover {
+  background: rgba(255,255,255,.06);
+}
+.muted {
+  color: #aeb7c6;
+  font-size: 13px;
+  font-style: italic;
+}
+
+/* Chart SVG */
+.chart { width: 100%; height: auto; }
+.chart .grid {
+  stroke: rgba(255,255,255,.1);
+  stroke-width: 1;
+}
+.chart .tick {
+  fill: #aeb7c6;
+  font-size: 10px;
+}
+.chart .xtick {
+  fill: #aeb7c6;
+  font-size: 10px;
+}
+.chart .ylabel {
+  fill: #c8d1e1;
+  font-size: 11px;
+  font-weight: 600;
+}
+.chart .line {
+  stroke: #6cf;
+  stroke-width: 2;
+}
+
+/* Heatmap */
+.heatmap {
+  display: grid;
+  grid-template-rows: repeat(7, 1fr);
+  gap: 2px;
+}
+.heat-row {
+  display: grid;
+  grid-template-columns: repeat(24, 1fr);
+  gap: 2px;
+}
+.heat-cell {
+  aspect-ratio: 1 / 1;
+  border-radius: 2px;
+}
+.heat-legend {
+  margin-top: 6px;
+  display: flex;
+  font-size: 12px;
+  color: #aeb7c6;
+}
+
+/* Loading */
+.loading {
+  text-align: center;
+  padding: 12px;
+  color: #6cf;
+  font-weight: 600;
+}

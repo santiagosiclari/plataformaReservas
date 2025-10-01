@@ -11,6 +11,7 @@ import axios, { AxiosError, AxiosRequestConfig } from "axios";
 // Env & constants
 // ------------------------------
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+const API_PREFIX = "/api/v1";
 const TIMEOUT_MS = 15000;
 const TOKEN_KEY = "access_token";
 const REFRESH_KEY = "refresh_token"; // optional, depending on your backend
@@ -43,7 +44,7 @@ export function clearAuthTokens() { setAuthTokens(null, null); }
 // Axios instance
 // ------------------------------
 const http = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: `${API_BASE_URL}${API_PREFIX}`,
   timeout: TIMEOUT_MS,
   // If your backend uses cookies for refresh endpoints:
   // withCredentials: true,
@@ -81,7 +82,7 @@ async function refreshAccessToken(): Promise<string | null> {
     try {
       // Adjust if your backend expects cookie-based refresh (GET) or a different path/body
       const { data } = await axios.post(
-        `${API_BASE_URL}/auth/refresh`,
+        `${API_BASE_URL}${API_PREFIX}/auth/refresh`,
         { refresh_token: refreshToken },
         { headers: { "Content-Type": "application/json" }, withCredentials: false }
       );

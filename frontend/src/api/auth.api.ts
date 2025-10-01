@@ -1,8 +1,4 @@
 // src/api/auth.api.ts
-// Auth API client for FastAPI router: /auth
-// Endpoints implemented:
-//  - POST /auth/login  -> { access_token }
-//  - GET  /auth/me     -> current user
 
 import http, { setAuthTokens, clearAuthTokens, getAccessToken } from "./http";
 import type { User } from "./users.api";
@@ -55,3 +51,13 @@ export async function loginAndFetchMe(body: LoginRequest): Promise<{ token: Toke
   const me = await getMe();
   return { token, me };
 }
+export async function registerUser(body: {
+  name: string;
+  email: string;
+  phone?: string;
+  password: string;
+}) {
+  const { data } = await http.post("/auth/register", body);
+  return data;
+}
+

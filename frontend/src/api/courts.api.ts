@@ -7,13 +7,16 @@ import http from "./http";
 // ---------------------------------
 // Types (owner CRUD / base court)
 // ---------------------------------
-export type Sport = "FOOTBALL" | "TENNIS" | "PADEL" | "BASKET" | "VOLLEY";
+export type Sport = "TENNIS" | "PADEL" | "FOOTBALL" | "BASKET" | "VOLLEY";
+export type Surface =
+  | "CLAY" | "HARD" | "GRASS" | "SYNTHETIC_TURF" | "PARQUET" | "SAND" | "OTHER";
+
 
 export interface Court {
   id: number;
   venue_id: number;
   sport: Sport;
-  surface?: string | null;
+  surface?: Surface | null;
   indoor: boolean;
   number?: string | null; // business identifier/label, not the PK
   notes?: string | null;
@@ -21,7 +24,7 @@ export interface Court {
 
 export interface CreateCourtDTO {
   sport: Sport;
-  surface?: string | null;
+  surface?: Surface;
   indoor?: boolean; // default false on backend
   number?: string | null;
   notes?: string | null;
@@ -161,7 +164,7 @@ export type SearchCourtsParams = {
 
 // ---- funciones públicas ----
 export async function getCourtPublic(courtId: number): Promise<CourtDetailPublic> {
-  const { data } = await http.get<CourtDetailPublic>(`/courts/${courtId}`);
+  const { data } = await http.get<CourtDetailPublic>(`/venues/courts/${courtId}`);
   return data;
 }
 
@@ -176,6 +179,6 @@ export async function getAvailabilityPublic(
 }
 
 export async function searchCourtsPublic(params: SearchCourtsParams) {
-  const { data } = await http.get<CourtSearchResult[]>(`/courts/search`, { params });
+  const { data } = await http.get<CourtSearchResult[]>(`/venues/courts/search`, { params });
   return data;
 }
