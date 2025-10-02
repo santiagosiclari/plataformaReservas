@@ -7,7 +7,7 @@ from app.shared.enums import BookingStatusEnum
 class BookingBase(BaseModel):
     start_datetime: datetime = Field(..., description="Fecha y hora de inicio de la reserva")
     end_datetime: datetime = Field(..., description="Fecha y hora de fin de la reserva")
-    status: Optional[BookingStatusEnum] = Field(default=BookingStatusEnum.CONFIRMED)
+    status: Optional[BookingStatusEnum] = Field(default=BookingStatusEnum.PENDING)
 
 class BookingCreate(BookingBase):
     court_id: int = Field(..., description="ID de la cancha reservada")

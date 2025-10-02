@@ -8,8 +8,7 @@ from uuid import uuid4
 def _bool_env(name: str, default: str = "true") -> bool:
     return os.getenv(name, default).lower() in ("1", "true", "yes", "y")
 
-def send_html_email_gmail(
-    to_owner: str | None,
+def send_html_email_gmail(to_owner: str | None,
     to_player: str | None,
     html_body: str,
     subject: str,
@@ -17,8 +16,21 @@ def send_html_email_gmail(
     description: str,      # p.ej. "Reserva #{id} ..."
     location: str,         # p.ej. "Av. Siempreviva 742, CABA"
     start_dt, end_dt,      # datetimes aware o naïve -> se fuerzan a UTC
-    organizer_email: str | None,
-):
+    organizer_email: str | None, method: str = "REQUEST", sequence: int = 0, uid: str | None = None):
+    uid = uid or str(uuid4())
+    ics_text = build_booking_ics(
+        uid=uid,
+        summary=summary,
+        description=description,
+        location=location,
+        start_dt=start_dt,
+        end_dt=end_dt,
+        organizer_email=organizer_email,
+        attendee_emails=[e for e in [to_owner, to_player] if e],
+        method=method,
+        sequence=sequence,
+        status_line=("STATUS:CANCELLED" if method == "CANCEL" else None),
+    )
 
     SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
     SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))

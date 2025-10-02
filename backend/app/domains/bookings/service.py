@@ -3,10 +3,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, time, timedelta
 from typing import Optional
-from sqlalchemy import and_, select
+from sqlalchemy import and_, select, or_, func, literal_column, tuple_
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 
+from app.domains.notifications.booking_state import notify_booking_state_change
 from app.domains.bookings.models import Booking
 from app.domains.venues.models import Court, Venue
 from app.domains.users.models import User
@@ -59,6 +60,16 @@ def _get_booking_or_404(db: Session, booking_id: int) -> Booking:
         raise HTTPException(404, "Booking no encontrada")
     return bk
 
+def _ensure_owner_of_court(db: Session, actor: User, court_id: int):
+    court = db.get(Court, court_id)
+    if not court:
+        raise HTTPException(404, "Court no encontrada")
+    venue = db.get(Venue, court.venue_id)
+    if not venue:
+        raise HTTPException(404, "Venue no encontrado")
+    if getattr(actor, "role", None) != "ADMIN" and venue.owner_user_id != actor.id:
+        raise HTTPException(403, "No sos owner de este venue")
+
 def _validate_within_schedule(db: Session, court_id: int, start: datetime, end: datetime):
     wd = _weekday_of(start)
     if _weekday_of(end) != wd:
@@ -80,8 +91,12 @@ def _validate_within_schedule(db: Session, court_id: int, start: datetime, end: 
 
 def _assert_no_overlap(db: Session, court_id: int, start: datetime, end: datetime, exclude_id: Optional[int] = None):
     q = select(Booking).where(
-        and_(Booking.court_id == court_id, Booking.status != BookingStatusEnum.CANCELLED,
-             Booking.start_datetime < end, Booking.end_datetime > start)
+        and_(
+            Booking.court_id == court_id,
+            Booking.status.in_(Booking.blocking_statuses()),
+            Booking.start_datetime < end,
+            Booking.end_datetime > start,
+        )
     )
     if exclude_id is not None:
         q = q.where(Booking.id != exclude_id)
@@ -126,13 +141,17 @@ def create_booking(db: Session, user_id: int, court_id: int, start: datetime, en
     _assert_no_overlap(db, court.id, start, end)
     price = _compute_price_total(db, court.id, start, end)
 
+    now = datetime.utcnow()
+
     bk = Booking(
         user_id=user_id,
         court_id=court.id,
         start_datetime=start,
         end_datetime=end,
         price_total=price,
-        status=status_ or BookingStatusEnum.CONFIRMED,
+        status=status_ or BookingStatusEnum.PENDING,
+        expires_at=now + timedelta(minutes=20),                # 👈 vence en 20'
+
     )
     db.add(bk)
     db.commit()
@@ -172,9 +191,6 @@ def update_booking(db: Session, booking_id: int,
         _assert_no_overlap(db, bk.court_id, start, end, exclude_id=bk.id)
         bk.start_datetime, bk.end_datetime = start, end
         bk.price_total = _compute_price_total(db, bk.court_id, start, end)
-
-    if new_status is not None:
-        bk.status = new_status
 
     db.commit(); db.refresh(bk)
     return bk
@@ -240,3 +256,131 @@ def list_bookings_svc(db: Session, filters: BookingListFilters) -> list[Booking]
         q = q.where(Booking.start_datetime < filters.date_to)
     q = q.order_by(Booking.start_datetime.asc())
     return db.execute(q).scalars().all()
+
+# ---------- CONFIRMAR (OWNER) ----------
+def confirm_booking_svc(db: Session, booking_id: int, actor: User, now: Optional[datetime] = None) -> Booking:
+    now = now or datetime.utcnow()
+    bk = _get_booking_or_404(db, booking_id)
+    _ensure_owner_of_court(db, actor, bk.court_id)
+
+    ok, why = bk.can_confirm(now)
+    if not ok:
+        raise HTTPException(status.HTTP_409_CONFLICT, f"No se puede confirmar: {why}")
+
+    old = bk.status
+    bk.confirm(by_user_id=actor.id, at=now)
+
+    db.commit(); db.refresh(bk)
+    try:
+        notify_booking_state_change(bk.id, old, bk.status)
+    except Exception as e:
+        print(f"[notify confirm] #{bk.id}: {e}")
+
+    return bk
+
+# ---------- DECLINAR (OWNER) ----------
+def decline_booking_svc(db: Session, booking_id: int, actor: User, now: Optional[datetime] = None) -> Booking:
+    now = now or datetime.utcnow()
+    bk = _get_booking_or_404(db, booking_id)
+    _ensure_owner_of_court(db, actor, bk.court_id)
+
+    # Opción A: usar método decline() en la SM (recomendado)
+    if hasattr(bk._sm(), "decline"):
+        bk._sm().decline(bk, by_user_id=actor.id, at=now)
+    else:
+        # Opción B: mapear a CANCELLED si no implementaste decline aún
+        if bk.status != BookingStatusEnum.PENDING:
+            raise HTTPException(409, f"No se puede declinar en estado {bk.status}")
+        bk.status = BookingStatusEnum.CANCELLED
+
+    db.commit(); db.refresh(bk)
+    try:
+        notify_booking_state_change(bk.id, old, bk.status)
+    except Exception as e:
+        print(f"[notify decline] #{bk.id}: {e}")
+    return bk
+
+# ---------- CANCELAR (USER) ----------
+def cancel_booking_svc(db: Session, booking_id: int, actor: User,
+                       now: Optional[datetime] = None, late_window_hours: int = 24) -> Booking:
+    now = now or datetime.utcnow()
+    bk = _get_booking_or_404(db, booking_id)
+    if getattr(actor, "role", None) != "ADMIN" and bk.user_id != actor.id:
+        raise HTTPException(403, "Solo el creador o un admin puede cancelar")
+
+    allowed, is_late, why = bk.can_cancel(now, late_window_hours)
+    if not allowed:
+        raise HTTPException(409, f"No se puede cancelar: {why}")
+    old = bk.status
+    bk.cancel(by_user_id=actor.id, now=now, late_window_hours=late_window_hours)
+
+    db.commit(); db.refresh(bk)
+    try:
+        notify_booking_state_change(bk.id, old, bk.status)
+    except Exception as e:
+        print(f"[notify cancel] #{bk.id}: {e}")
+    return bk
+
+# ---------- EXPIRAR (JOB/CRON) ----------
+def expire_pending_bookings_svc(db: Session, now: Optional[datetime] = None) -> int:
+    now = now or datetime.utcnow()
+    q = select(Booking).where(
+        and_(Booking.status == BookingStatusEnum.PENDING,
+             Booking.expires_at != None,
+             Booking.expires_at <= now)
+    )
+    rows = db.execute(q).scalars().all()
+
+    changed = 0
+    changes: list[tuple[int, BookingStatusEnum, BookingStatusEnum]] = []  # (id, old, new)
+
+    for bk in rows:
+        old = bk.status
+        if hasattr(bk._sm(), "expire"):
+            try:
+                bk._sm().expire(bk, at=now)  # ideal → EXPIRED
+                changed += 1
+                changes.append((bk.id, old, bk.status))
+            except Exception:
+                pass
+        else:
+            if bk.status == BookingStatusEnum.PENDING:
+                bk.status = BookingStatusEnum.CANCELLED
+                changed += 1
+                changes.append((bk.id, old, bk.status))
+
+    if changed:
+        db.commit()
+        for bid, old_status, new_status in changes:  # 👈 notificar por cada booking
+            try:
+                notify_booking_state_change(bid, old_status, new_status)
+            except Exception as e:
+                print(f"[notify expire] booking #{bid}: {e}")
+
+    return changed
+
+def svc_list_owner_bookings(
+    db: Session,
+    owner_id: int,
+    from_dt: Optional[datetime] = None,
+    to_dt: Optional[datetime] = None,
+) -> list[Booking]:
+
+    v_ids = owned_venue_ids(db, owner_id)
+    if not v_ids:
+        return []
+
+    q = (
+        select(Booking)
+        .join(Court, Court.id == Booking.court_id)
+        .where(Court.venue_id.in_(v_ids))
+    )
+
+    if from_dt is not None:
+        q = q.where(Booking.start_datetime >= from_dt)
+    if to_dt is not None:
+        q = q.where(Booking.start_datetime < to_dt)
+
+    q = q.order_by(Booking.start_datetime.asc())
+
+    return list(db.execute(q).scalars().all())

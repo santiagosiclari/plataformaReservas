@@ -14,7 +14,7 @@ from app.domains.scheduling import routers as availability
 from app.domains.schedules import routers as schedules
 from app.domains.bookings import routers as bookings
 from app.domains.pricing import routers as prices
-from app.domains.venues.public import router as venues_public  # 👈 este es el que pegaste
+from app.domains.venues.public import router as venues_public
 
 
 # Carga .env (en config ya se lee, pero si querés reforzar)

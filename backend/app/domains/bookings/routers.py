@@ -1,7 +1,23 @@
 # app/domains/bookings/routers.py (extracto)
 from fastapi import APIRouter, Depends, HTTPException, Query, status, BackgroundTasks
-from app.domains.bookings.service import create_booking as svc_create_booking, BookingEmailContext
-from app.utils.email_templates import booking_html_for_player
+from app.domains.bookings.service import (
+    BookingListFilters,
+    list_bookings_svc,
+    create_booking as svc_create_booking,
+    get_booking as svc_get_booking,
+    update_booking as svc_update_booking,
+    cancel_booking_svc,                # 👈 nuevo: cancelación con permisos (user/admin)
+    confirm_booking_svc,               # 👈 nuevo: owner confirma
+    decline_booking_svc,               # 👈 nuevo: owner rechaza
+    expire_pending_bookings_svc,       # 👈 nuevo: job/manual
+    BookingEmailContext,
+    svc_list_owner_bookings,
+)
+from app.utils.email_templates import (
+    booking_html_player_confirmed,
+    booking_html_player_cancelled,
+    booking_html_player_pending,
+)
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, select
 from typing import Optional, List
@@ -25,12 +41,12 @@ def create_booking(payload: BookingCreate, background_tasks: BackgroundTasks,
         court_id=payload.court_id,
         start=payload.start_datetime,
         end=payload.end_datetime,
-        status_=payload.status,
+        status_=payload.status,   # si viene None, el service lo fuerza a PENDING
     )
 
-    # Construir HTML base una sola vez (podés diferenciar owner/player si querés)
-    html = booking_html_for_player(
-        player_name=None,  # opcional: buscá el nombre si querés personalizar
+    # HTML para “pendiente”
+    html = booking_html_player_pending(
+        player_name=None,
         venue_name=ctx.venue_name,
         court_name=ctx.court_label,
         start=ctx.start_dt,
@@ -38,16 +54,16 @@ def create_booking(payload: BookingCreate, background_tasks: BackgroundTasks,
         price=ctx.price_total,
     )
 
-    # Agenda envío ICS (un mail a player y otro a owner)
+    # Enviá mails distintos si querés; por simplicidad mandamos uno genérico con estado pendiente
     if ctx.owner_email or ctx.player_email:
         background_tasks.add_task(
             send_booking_confirmation_with_ics,
             to_owner=ctx.owner_email,
             to_player=ctx.player_email,
             html_body=html,
-            subject="Tu reserva fue confirmada ✅",
-            summary=f"Reserva en {ctx.venue_name} - {ctx.court_label}",
-            description=f"Reserva #{ctx.booking_id} en {ctx.venue_name}. Precio: $ {ctx.price_total:,.0f} ARS",
+            subject="Tu reserva está pendiente de confirmación ⏳",
+            summary=f"Reserva en {ctx.venue_name} - {ctx.court_label} (pendiente)",
+            description=f"Reserva #{ctx.booking_id} pendiente. Precio: $ {ctx.price_total:,.0f} ARS",
             location=ctx.venue_address or ctx.venue_name,
             start_dt=ctx.start_dt,
             end_dt=ctx.end_dt,
@@ -88,15 +104,14 @@ def update_booking(booking_id: int, payload: BookingUpdate,
         booking_id=booking_id,
         new_start=payload.start_datetime,
         new_end=payload.end_datetime,
-        new_status=payload.status,
+        new_status=None,  # 👈 bloqueamos cambio de estado por PATCH
     )
-    # (Opcional) acá podrías disparar un mail ICS de reprogramación (SEQUENCE+1)
+    # (Opcional) disparar mail ICS de reprogramación
     return bk
 
 @router.delete("/{booking_id}", status_code=status.HTTP_204_NO_CONTENT)
 def cancel_booking(booking_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
-    svc_cancel_booking(db, booking_id)
-    # (Opcional) enviar ICS METHOD:CANCEL al owner/jugador
+    cancel_booking_svc(db, booking_id=booking_id, actor=user)  # respeta reglas/late window
     return
 
 @router.get("/admin/bookings", response_model=list[dict], dependencies=[Depends(require_owner)])
@@ -123,3 +138,27 @@ def owner_bookings(
         }
         for b in rows
     ]
+
+@router.post("/{booking_id}/confirm", response_model=BookingOut)
+def confirm_booking_ep(booking_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
+    # Solo OWNER (o admin) dentro del service
+    bk = confirm_booking_svc(db, booking_id, actor=user, now=datetime.utcnow())
+    return bk
+
+@router.post("/{booking_id}/decline", response_model=BookingOut)
+def decline_booking_ep(booking_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
+    bk = decline_booking_svc(db, booking_id, actor=user, now=datetime.utcnow())
+    # (Opcional) enviar aviso de declinación
+    return bk
+
+@router.post("/{booking_id}/cancel", response_model=BookingOut)
+def cancel_booking_ep(booking_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
+    # Cancel por POST para frontend simple; DELETE queda como atajo RESTful
+    bk = cancel_booking_svc(db, booking_id, actor=user, now=datetime.utcnow(), late_window_hours=24)
+    return bk
+
+# Admin/dev: barrer expiradas PENDING (simulación cron)
+@router.post("/admin/expire-now", response_model=dict, dependencies=[Depends(require_owner)])
+def expire_now_ep(db: Session = Depends(get_db)):
+    n = expire_pending_bookings_svc(db, now=datetime.utcnow())
+    return {"expired": n}

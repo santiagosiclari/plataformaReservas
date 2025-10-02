@@ -7,7 +7,7 @@ import http from "./http";
 // ---------------------------------
 // Types
 // ---------------------------------
-export type BookingStatus = "PENDING" | "CONFIRMED" | "CANCELLED" | "CANCELLED_LATE" | string; // allow backend extras
+export type BookingStatus = "PENDING" | "CONFIRMED" | "CANCELLED" | "CANCELLED_LATE" | "EXPIRED" | "NO_SHOW" | "REFUNDED" | string;
 
 export interface Booking {
   id: number;
@@ -19,6 +19,7 @@ export interface Booking {
   /** Backend may serialize Decimal as string; accept both */
   price_total: number;
   created_at: string; // ISO8601
+  expires_at?: string | null; // 👈 para countdown (si el backend lo envía)
 }
 
 export interface CreateBookingDTO {
@@ -117,26 +118,35 @@ export async function deleteBooking(bookingId: number): Promise<void> {
 // POST /bookings/:id/confirm
 // POST /bookings/:id/cancel { reason?, late_window_hours? }
 // ---------------------------------
-export async function confirmBooking(bookingId: number): Promise<Booking> {
-  const { data } = await http.post(`/bookings/${bookingId}/confirm`);
-  return data as Booking;
-}
-
 export interface CancelBookingDTO {
   reason?: string | null;
   // If your backend needs it; otherwise omit when calling
   late_window_hours?: number;
 }
 
-export async function cancelBooking(bookingId: number, body: CancelBookingDTO = {}): Promise<Booking> {
-  const { data } = await http.post(`/bookings/${bookingId}/cancel`, body);
+export async function confirmBooking(bookingId: number): Promise<Booking> {
+  const { data } = await http.post(`/bookings/${bookingId}/confirm`);
+  return data as Booking;
+}
+export async function declineBooking(bookingId: number): Promise<Booking> {
+  const { data } = await http.post(`/bookings/${bookingId}/decline`);
+  return data as Booking;
+}
+export async function cancelBooking(bookingId: number): Promise<Booking> {
+  const { data } = await http.post(`/bookings/${bookingId}/cancel`);
   return data as Booking;
 }
 
 // ---------------------------------
 // Convenience: current user's bookings
 // ---------------------------------
-export async function listMyBookings(): Promise<Booking[]> {
-  const { data } = await http.get("/bookings", { params: { mine: true } });
+export async function listMyBookings(params: { date_from?: string; date_to?: string } = {}): Promise<Booking[]> {
+  const { data } = await http.get(`/bookings?mine=1`, { params });
   return data as Booking[];
 }
+
+export async function listOwnerBookings(params: { from?: string; to?: string } = {}): Promise<Booking[]> {
+  const { data } = await http.get(`/bookings/admin/bookings`, { params });
+  return data as Booking[];
+}
+
