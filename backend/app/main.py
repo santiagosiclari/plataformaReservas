@@ -14,7 +14,7 @@ from app.domains.scheduling import routers as availability
 from app.domains.schedules import routers as schedules
 from app.domains.bookings import routers as bookings
 from app.domains.pricing import routers as prices
-from app.domains.venues.public import router as venues_public  # 👈 este es el que pegaste
+from app.domains.venues.public import router as venues_public
 
 
 # Carga .env (en config ya se lee, pero si querés reforzar)
@@ -42,7 +42,7 @@ app.include_router(schedules.router, prefix="/api/v1", tags=["schedules"])
 app.include_router(availability.router, prefix="/api/v1", tags=["availability"])
 app.include_router(bookings.router, prefix="/api/v1", tags=["bookings"])
 app.include_router(prices.router, prefix="/api/v1", tags=["prices"])
-app.include_router(venues_public, prefix="/api/v1", tags=["venues-public"])  # 👈 NUEVO
+app.include_router(venues_public, prefix="/api/v1", tags=["venues-public"])
 
 
 # --- Startup: init DB ---

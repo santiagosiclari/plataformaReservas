@@ -8,6 +8,114 @@ from typing import ClassVar, Optional, Set, Tuple, TYPE_CHECKING
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.db import Base
 
+class BookingStateMachine:
+    """
+    Interfaz mínima para una máquina de estados enchufable.
+    Podés reemplazarla en runtime con Booking.set_state_machine(...)
+    """
+
+    def can_confirm(self, booking: "Booking", now: datetime) -> Tuple[bool, Optional[str]]:
+        raise NotImplementedError
+
+    def confirm(self, booking: "Booking", by_user_id: int, at: datetime) -> None:
+        raise NotImplementedError
+
+    def can_cancel(
+        self, booking: "Booking", now: datetime, late_window_hours: int
+    ) -> Tuple[bool, bool, Optional[str]]:
+        raise NotImplementedError
+
+    def cancel(
+        self,
+        booking: "Booking",
+        by_user_id: int,
+        now: datetime,
+        late_window_hours: int,
+        reason: Optional[str] = None,
+    ) -> None:
+        raise NotImplementedError
+
+class DefaultStateMachine(BookingStateMachine):
+
+    # ---------- CONFIRM ----------
+    def can_confirm(self, booking: "Booking", now: datetime) -> Tuple[bool, Optional[str]]:
+        if booking.status == BookingStatusEnum.CONFIRMED:
+            return False, "Booking already confirmed"
+        if booking.status in (BookingStatusEnum.CANCELLED, BookingStatusEnum.CANCELLED_LATE):
+            return False, "Cannot confirm a cancelled booking"
+        if booking.start_datetime <= now:
+            return False, "Cannot confirm a booking in the past"
+        # 👇 NUEVO: si está vencida (simulación de “pago/owner timeout”)
+        if booking.expires_at is not None and booking.expires_at <= now:
+            return False, "Booking expired"
+        return True, None
+
+    def confirm(self, booking: "Booking", by_user_id: int, at: datetime) -> None:
+        ok, reason = self.can_confirm(booking, at)
+        if not ok:
+            raise ValueError(f"Cannot confirm booking: {reason}")
+        booking.status = BookingStatusEnum.CONFIRMED
+
+    # ---------- DECLINE (OWNER) ----------
+    def can_decline(self, booking: "Booking", now: datetime) -> Tuple[bool, Optional[str]]:
+        if booking.status not in (BookingStatusEnum.PENDING,):
+            return False, f"Cannot decline booking in status {booking.status}"
+        if booking.expires_at is not None and booking.expires_at <= now:
+            return False, "Booking already expired"
+        return True, None
+
+    def decline(self, booking: "Booking", by_user_id: int, at: datetime) -> None:
+        ok, reason = self.can_decline(booking, at)
+        if not ok:
+            raise ValueError(f"Cannot decline booking: {reason}")
+        # Usamos CANCELLED como “declinado por owner” para no crear otro enum;
+        # si preferís un estado distinto, podés agregar DECLINED.
+        booking.status = BookingStatusEnum.CANCELLED
+
+    # ---------- CANCEL (USER) ----------
+    def can_cancel(
+        self, booking: "Booking", now: datetime, late_window_hours: int
+    ) -> Tuple[bool, bool, Optional[str]]:
+        if booking.status in (BookingStatusEnum.CANCELLED, BookingStatusEnum.CANCELLED_LATE):
+            return False, False, "Booking already cancelled"
+        if booking.status not in (BookingStatusEnum.PENDING, BookingStatusEnum.CONFIRMED):
+            return False, False, f"Cannot cancel a booking in status {booking.status}"
+        if now >= booking.end_datetime:
+            return False, False, "Cannot cancel a booking that already ended"
+        late_threshold = booking.start_datetime - timedelta(hours=late_window_hours)
+        is_late = (now >= booking.start_datetime) or (now > late_threshold)
+        return True, is_late, None
+
+    def cancel(
+        self,
+        booking: "Booking",
+        by_user_id: int,
+        now: datetime,
+        late_window_hours: int,
+        reason: Optional[str] = None,
+    ) -> None:
+        allowed, is_late, why = self.can_cancel(booking, now, late_window_hours)
+        if not allowed:
+            raise ValueError(f"Cannot cancel booking: {why}")
+        booking.status = BookingStatusEnum.CANCELLED_LATE if is_late else BookingStatusEnum.CANCELLED
+
+    # ---------- EXPIRE (JOB) ----------
+    def can_expire(self, booking: "Booking", now: datetime) -> Tuple[bool, Optional[str]]:
+        if booking.status != BookingStatusEnum.PENDING:
+            return False, "Only pending bookings can expire"
+        if booking.expires_at is None or booking.expires_at > now:
+            return False, "Not yet expired"
+        return True, None
+
+    def expire(self, booking: "Booking", at: datetime) -> None:
+        ok, reason = self.can_expire(booking, at)
+        if not ok:
+            raise ValueError(f"Cannot expire booking: {reason}")
+        # Si preferís tener el enum EXPIRED, activalo en tu BookingStatusEnum.
+        # Si aún no lo agregaste, podés mapear a CANCELLED_LATE o CANCELLED.
+        booking.status = BookingStatusEnum.CANCELLED  # o BookingStatusEnum.EXPIRED si lo agregás
+
+
 class Booking(Base):
     __tablename__ = "bookings"
 
@@ -25,9 +133,16 @@ class Booking(Base):
     user: Mapped["User"] = relationship(back_populates="bookings")
     court: Mapped["Court"] = relationship(back_populates="bookings")
 
+    ics_uid: Mapped[Optional[str]] = mapped_column(nullable=True, index=True)
+    ics_sequence: Mapped[int] = mapped_column(default=0, nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=True, index=True)
+
     __table_args__ = (
         Index("ix_bookings_court_start", "court_id", "start_datetime"),
+        Index("ix_bookings_status_expires", "status", "expires_at"),
     )
+
+    _state_machine: ClassVar[BookingStateMachine] = DefaultStateMachine()
 
     def __repr__(self) -> str:
         return f"<Booking id={self.id} court_id={self.court_id} {self.start_datetime} status={self.status}>"
@@ -102,76 +217,3 @@ class Booking(Base):
     @classmethod
     def _sm(cls) -> BookingStateMachine:
         return cls._state_machine
-
-class BookingStateMachine:
-    """
-    Interfaz mínima para una máquina de estados enchufable.
-    Podés reemplazarla en runtime con Booking.set_state_machine(...)
-    """
-
-    def can_confirm(self, booking: "Booking", now: datetime) -> Tuple[bool, Optional[str]]:
-        raise NotImplementedError
-
-    def confirm(self, booking: "Booking", by_user_id: int, at: datetime) -> None:
-        raise NotImplementedError
-
-    def can_cancel(
-        self, booking: "Booking", now: datetime, late_window_hours: int
-    ) -> Tuple[bool, bool, Optional[str]]:
-        raise NotImplementedError
-
-    def cancel(
-        self,
-        booking: "Booking",
-        by_user_id: int,
-        now: datetime,
-        late_window_hours: int,
-        reason: Optional[str] = None,
-    ) -> None:
-        raise NotImplementedError
-
-
-class DefaultStateMachine(BookingStateMachine):
-    """Implementación por defecto: replica la lógica de dominio actual."""
-
-    def can_confirm(self, booking: "Booking", now: datetime) -> Tuple[bool, Optional[str]]:
-        if booking.status == BookingStatusEnum.CONFIRMED:
-            return False, "Booking already confirmed"
-        if booking.status in (BookingStatusEnum.CANCELLED, BookingStatusEnum.CANCELLED_LATE):
-            return False, "Cannot confirm a cancelled booking"
-        if booking.start_datetime <= now:
-            return False, "Cannot confirm a booking in the past"
-        return True, None
-
-    def confirm(self, booking: "Booking", by_user_id: int, at: datetime) -> None:
-        ok, reason = self.can_confirm(booking, at)
-        if not ok:
-            raise ValueError(f"Cannot confirm booking: {reason}")
-        booking.status = BookingStatusEnum.CONFIRMED
-
-    def can_cancel(
-        self, booking: "Booking", now: datetime, late_window_hours: int
-    ) -> Tuple[bool, bool, Optional[str]]:
-        if booking.status in (BookingStatusEnum.CANCELLED, BookingStatusEnum.CANCELLED_LATE):
-            return False, False, "Booking already cancelled"
-        if booking.status not in (BookingStatusEnum.PENDING, BookingStatusEnum.CONFIRMED):
-            return False, False, f"Cannot cancel a booking in status {booking.status}"
-        if now >= booking.end_datetime:
-            return False, False, "Cannot cancel a booking that already ended"
-
-        late_threshold = booking.start_datetime - timedelta(hours=late_window_hours)
-        is_late = (now >= booking.start_datetime) or (now > late_threshold)
-        return True, is_late, None
-
-    def cancel(
-        self,
-        booking: "Booking",
-        by_user_id: int,
-        now: datetime,
-        late_window_hours: int,
-        reason: Optional[str] = None,
-    ) -> None:
-        allowed, is_late, why = self.can_cancel(booking, now, late_window_hours)
-        if not allowed:
-            raise ValueError(f"Cannot cancel booking: {why}")
-        booking.status = BookingStatusEnum.CANCELLED_LATE if is_late else BookingStatusEnum.CANCELLED

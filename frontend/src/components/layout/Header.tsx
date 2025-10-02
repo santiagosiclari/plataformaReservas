@@ -52,6 +52,7 @@ const Header: React.FC<HeaderProps> = ({ brand, onLogin, onLogout, myBookingsPat
             <Link className="menu-item" to="/user">Mi perfil</Link>
             <Link className="menu-item" to={myBookingsPath} onClick={handleBookingsClick}>Mis reservas</Link>
             {isAdmin && <Link className="menu-item" to="/admin">Panel Admin</Link>}
+            {isAdmin && <Link className="menu-item" to="/admin/manage">Panel Manage</Link>}
             <div className="menu-sep" />
             <button className="menu-item danger" onClick={onLogout}>Salir</button>
           </div>

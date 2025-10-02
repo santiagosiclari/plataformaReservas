@@ -86,3 +86,28 @@
   border-radius: 10px;
   padding: .6rem .8rem;
 }
+
+/* Tabs */
+.tabs { display: inline-flex; gap: .5rem; }
+.tab {
+  appearance: none; border: 1px solid var(--border); background: var(--surface);
+  color: var(--text); border-radius: 999px; padding: .35rem .8rem; cursor: pointer; font-weight: 600;
+}
+.tab.active { background: var(--primary); color: var(--primary-contrast); border-color: transparent; }
+
+/* Badges */
+.badge {
+  display: inline-block; font-size: .78rem; padding: .2rem .5rem; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text);
+}
+.badge-ok { background: #e6ffed; border-color: #b7f5c3; color: #065f46; }
+.badge-pending { background: #eef2ff; border-color: #c7d2fe; color: #3730a3; }
+.badge-warn { background: #fffbeb; border-color: #fde68a; color: #78350f; }
+.badge-cancel { background: #fff1f2; border-color: #fecaca; color: #7f1d1d; }
+.badge-expired { background: #f3f4f6; border-color: #e5e7eb; color: #374151; }
+.badge-info { background: #eff6ff; border-color: #bfdbfe; color: #1e40af; }
+
+.muted { color: var(--muted); }
+
+/* Botones ya definidos por vos; reusamos .btn y .btn-primary */
+.header-row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }

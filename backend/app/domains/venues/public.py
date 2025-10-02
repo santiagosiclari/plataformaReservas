@@ -1,11 +1,12 @@
+#venues/public
 from typing import Optional, List, Dict, Any
 from fastapi import APIRouter, Depends, Query, HTTPException
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
-from sqlalchemy import select, func, or_
+from sqlalchemy import select, func, or_, case
 
 from app.core.deps import get_db
-from app.domains.venues.models import Venue, Court
+from app.domains.venues.models import Venue, Court, CourtPhoto, VenuePhoto
 from app.domains.pricing.models import Price
 from pydantic import BaseModel
 
@@ -30,10 +31,31 @@ def search_courts(
     lat: Optional[float] = None,
     lng: Optional[float] = None,
     radius_km: Optional[float] = Query(None, ge=0),
-    sport: Optional[str] = None,
+    sport: Optional[str] = None,   # si querés, tipalo con tu enum y casteá str()
     limit: int = Query(24, ge=1, le=100),
     db: Session = Depends(get_db),
 ) -> List[Dict[str, Any]]:
+
+    # --- subqueries: portada court y portada venue ---
+    court_cover_sq = (
+        select(CourtPhoto.url)
+        .where(CourtPhoto.court_id == Court.id)
+        .order_by(CourtPhoto.is_cover.desc(), CourtPhoto.sort_order.asc(), CourtPhoto.id.asc())
+        .limit(1)
+        .scalar_subquery()
+    )
+
+    venue_cover_sq = (
+        select(VenuePhoto.url)
+        .where(VenuePhoto.venue_id == Court.venue_id)
+        .order_by(VenuePhoto.is_cover.desc(), VenuePhoto.sort_order.asc(), VenuePhoto.id.asc())
+        .limit(1)
+        .scalar_subquery()
+    )
+
+    photo_url_expr = func.coalesce(court_cover_sq, venue_cover_sq).label("photo_url")  # 👈 usar este
+
+    # --- base select ---
     stmt = (
         select(
             Court.id.label("court_id"),
@@ -42,10 +64,12 @@ def search_courts(
             Venue.id.label("venue_id"),
             Venue.name.label("venue_name"),
             Venue.address, Venue.latitude, Venue.longitude,
+            photo_url_expr,  # 👈 portada
         )
         .join(Venue, Venue.id == Court.venue_id)
     )
 
+    # --- filtros ---
     if q:
         pattern = f"%{q.strip()}%"
         stmt = stmt.where(
@@ -55,24 +79,30 @@ def search_courts(
                 Court.number.ilike(pattern),
             )
         )
+
     if sport:
+        # si sport viene como string "PADEL"/"TENNIS", y Court.sport es Enum, esto suele funcionar,
+        # pero si tu DB guarda el enum como nombre distinto, castealo según tu ORM/enum.
         stmt = stmt.where(Court.sport == sport)
 
+    # --- distancia y orden ---
     distance_col = None
     if lat is not None and lng is not None:
         distance_col = haversine_km(lat, lng, Venue.latitude, Venue.longitude).label("distance_km")
         stmt = stmt.add_columns(distance_col)
         if radius_km:
             stmt = stmt.where(distance_col <= radius_km)
-        stmt = stmt.order_by(distance_col.asc())
+        stmt = stmt.order_by(distance_col.asc(), Venue.name.asc())
     else:
         stmt = stmt.order_by(Venue.name.asc())
 
     rows = db.execute(stmt.limit(limit)).all()
 
+    # --- mapear salida ---
     results: List[Dict[str, Any]] = []
     for r in rows:
         m = r._mapping
+
         price_hint = db.execute(
             select(Price.price_per_slot)
             .where(Price.court_id == m["court_id"])
@@ -88,7 +118,7 @@ def search_courts(
             "venue_id": m["venue_id"],
             "venue_name": m["venue_name"],
             "court_name": f"Cancha {m['court_number']}" if m["court_number"] else "Cancha",
-            "sport": str(m["sport"]),
+            "sport": str(m["sport"]),           # si es Enum, castealo a str
             "surface": m["surface"],
             "indoor": m["indoor"],
             "lat": lat_val,
@@ -96,12 +126,29 @@ def search_courts(
             "address": m["address"],
             "distance_km": float(m["distance_km"]) if distance_col is not None and m.get("distance_km") is not None else None,
             "price_hint": float(price_hint) if price_hint is not None else None,
-            "photo_url": None,
+            "photo_url": m["photo_url"],        # 👈 usar alias correcto
         })
     return results
 
 @router.get("/venues/courts/{court_id}")
 def get_court_public(court_id: int, db: Session = Depends(get_db)) -> Dict[str, Any]:
+    # subqueries: cover court y cover venue
+    court_cover_sq = (
+        select(CourtPhoto.url)
+        .where(CourtPhoto.court_id == Court.id)
+        .order_by(CourtPhoto.is_cover.desc(), CourtPhoto.sort_order.asc(), CourtPhoto.id.asc())
+        .limit(1)
+        .scalar_subquery()
+    )
+    venue_cover_sq = (
+        select(VenuePhoto.url)
+        .where(VenuePhoto.venue_id == Court.venue_id)
+        .order_by(VenuePhoto.is_cover.desc(), VenuePhoto.sort_order.asc(), VenuePhoto.id.asc())
+        .limit(1)
+        .scalar_subquery()
+    )
+    cover_expr = func.coalesce(court_cover_sq, venue_cover_sq).label("cover_url")
+
     row = db.execute(
         select(
             Court.id.label("court_id"),
@@ -111,6 +158,7 @@ def get_court_public(court_id: int, db: Session = Depends(get_db)) -> Dict[str, 
             Venue.name.label("venue_name"),
             Venue.address,
             Venue.latitude, Venue.longitude,
+            cover_expr,  # 👈 NUEVO
         )
         .join(Venue, Venue.id == Court.venue_id)
         .where(Court.id == court_id)
@@ -121,6 +169,16 @@ def get_court_public(court_id: int, db: Session = Depends(get_db)) -> Dict[str, 
 
     lat = float(row["latitude"]) if row["latitude"] is not None else None
     lng = float(row["longitude"]) if row["longitude"] is not None else None
+
+    # fotos de la cancha (orden: portada primero, luego sort_order)
+    photos = db.execute(
+        select(
+            CourtPhoto.id, CourtPhoto.url,
+            CourtPhoto.is_cover, CourtPhoto.sort_order, CourtPhoto.alt_text
+        )
+        .where(CourtPhoto.court_id == row["court_id"])
+        .order_by(CourtPhoto.is_cover.desc(), CourtPhoto.sort_order.asc(), CourtPhoto.id.asc())
+    ).all()
 
     return {
         "id": row["court_id"],
@@ -135,7 +193,18 @@ def get_court_public(court_id: int, db: Session = Depends(get_db)) -> Dict[str, 
         "venue_longitude": lng,
         "latitude": lat,     # compat
         "longitude": lng,    # compat
+        "cover_url": row["cover_url"],  # 👈 NUEVO
+        "photos": [
+            {
+                "id": p.id,
+                "url": p.url,
+                "is_cover": p.is_cover,
+                "sort_order": p.sort_order,
+                "alt_text": p.alt_text,
+            } for p in photos
+        ],
     }
+
 
 # -------- Venues públicos --------
 class VenuePublicOut(BaseModel):
