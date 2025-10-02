@@ -136,6 +136,15 @@ const CourtDetailPage: React.FC = () => {
 
   return (
     <div className="court-detail">
+      {(court.cover_url || (court.photos && court.photos.length)) && (
+      <div className="hero">
+        <img
+          src={court.cover_url || court.photos![0].url}
+          alt={court.photos?.find(p => p.is_cover)?.alt_text || court.court_name}
+          className="hero-img"
+        />
+      </div>
+    )}
       <div className="court-header">
         <h1>
           {court.venue_name} – {court.court_name}

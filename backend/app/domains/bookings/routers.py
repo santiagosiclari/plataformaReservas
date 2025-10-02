@@ -1,7 +1,6 @@
 # app/domains/bookings/routers.py (extracto)
 from fastapi import APIRouter, Depends, HTTPException, Query, status, BackgroundTasks
 from app.domains.bookings.service import create_booking as svc_create_booking, BookingEmailContext
-from app.domains.bookings.schemas import BookingCreate, BookingOut
 from app.utils.email_templates import booking_html_for_player
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, select
@@ -11,6 +10,8 @@ from app.domains.bookings.schemas import BookingCreate, BookingUpdate, BookingOu
 from app.domains.users.models import User
 from app.domains.notifications.calendar_sender import send_booking_confirmation_with_ics
 from app.core.deps import get_db, get_current_user, require_owner
+from app.domains.bookings.service import BookingListFilters, list_bookings_svc
+
 
 router = APIRouter(prefix="/bookings", tags=["bookings"])
 
@@ -77,7 +78,7 @@ def list_bookings(
         date_to=date_to,
         requester_user_id=user.id,
     )
-    return svc_list_bookings(db, filters)
+    return list_bookings_svc(db, filters)
 
 @router.patch("/{booking_id}", response_model=BookingOut)
 def update_booking(booking_id: int, payload: BookingUpdate,

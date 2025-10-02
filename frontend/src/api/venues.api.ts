@@ -3,6 +3,26 @@ import type { AxiosResponse } from "axios";
 import http from "./http";
 import type { Sport } from "./courts.api"; // reutilizamos el tipo ya definido en courts.api
 
+export interface VenuePhoto {
+  id: number;
+  venue_id: number;
+  url: string;
+  is_cover: boolean;
+  sort_order: number;
+  alt_text?: string | null;
+}
+
+export type VenuePhotoCreate = {
+  url: string;
+  alt_text?: string | null;
+  is_cover?: boolean;
+  sort_order?: number;
+};
+
+export type VenuePhotoUpdate = Partial<Omit<VenuePhoto, "id" | "venue_id" | "url">> & {
+  url?: string;
+};
+
 export interface Venue {
   id: number;
   name: string;
@@ -13,6 +33,7 @@ export interface Venue {
   owner_user_id: number;
   created_at: string;
   courts?: CourtSummary[];
+  photos?: VenuePhoto[];
 }
 
 export interface CourtSummary {
@@ -73,6 +94,7 @@ export interface VenueCreate {
   city?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  photos?: VenuePhoto[];
 }
 export type VenueUpdate = Partial<VenueCreate>;
 
@@ -112,4 +134,23 @@ export async function listFeaturedVenues(): Promise<Venue[]> {
     const page = await listVenues({ page: 1, page_size: 6 });
     return page.items;
   }
+}
+
+export async function listVenuePhotos(venueId: number): Promise<VenuePhoto[]> {
+  const { data } = await http.get(`/venues/${venueId}/photos`);
+  return data as VenuePhoto[];
+}
+
+export async function createVenuePhoto(venueId: number, body: VenuePhotoCreate): Promise<VenuePhoto> {
+  const { data } = await http.post(`/venues/${venueId}/photos`, body);
+  return data as VenuePhoto;
+}
+
+export async function updateVenuePhoto(venueId: number, photoId: number, body: VenuePhotoUpdate): Promise<VenuePhoto> {
+  const { data } = await http.patch(`/venues/${venueId}/photos/${photoId}`, body);
+  return data as VenuePhoto;
+}
+
+export async function deleteVenuePhoto(venueId: number, photoId: number): Promise<void> {
+  await http.delete(`/venues/${venueId}/photos/${photoId}`);
 }

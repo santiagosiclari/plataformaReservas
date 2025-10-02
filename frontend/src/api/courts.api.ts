@@ -12,6 +12,26 @@ export type Surface =
   | "CLAY" | "HARD" | "GRASS" | "SYNTHETIC_TURF" | "PARQUET" | "SAND" | "OTHER";
 
 
+  export interface CourtPhoto {
+    id: number;
+    court_id: number;
+    url: string;
+    is_cover: boolean;
+    sort_order: number;
+    alt_text?: string | null;
+  }
+
+  export type CourtPhotoCreate = {
+    url: string;
+    alt_text?: string | null;
+    is_cover?: boolean;     // opcional en create
+    sort_order?: number;    // opcional en create
+  };
+
+
+  export type CourtPhotoUpdate = Partial<Omit<CourtPhoto, "id" | "court_id" | "url">> & {
+    url?: string;
+  };
 export interface Court {
   id: number;
   venue_id: number;
@@ -20,6 +40,7 @@ export interface Court {
   indoor: boolean;
   number?: string | null; // business identifier/label, not the PK
   notes?: string | null;
+  photos?: CourtPhoto[];
 }
 
 export interface CreateCourtDTO {
@@ -28,6 +49,7 @@ export interface CreateCourtDTO {
   indoor?: boolean; // default false on backend
   number?: string | null;
   notes?: string | null;
+  photos?: CourtPhoto[];
 }
 
 export interface UpdateCourtDTO {
@@ -36,6 +58,7 @@ export interface UpdateCourtDTO {
   indoor?: boolean;
   number?: string | null;
   notes?: string | null;
+  photos?: CourtPhoto[];
 }
 
 export interface ListCourtsParams {
@@ -111,13 +134,21 @@ export type CourtDetailPublic = {
   id: number;
   venue_id: number;
   venue_name: string;
-  court_name: string; // "Cancha 2", etc.
-  sport: Sport | string;         // backend puede devolver string
+  court_name: string;
+  sport: string;
   surface?: string | null;
   indoor?: boolean;
+  address?: string | null;
   venue_latitude?: number | null;
   venue_longitude?: number | null;
-  address?: string | null;
+  cover_url?: string | null;        // 👈 nuevo
+  photos?: Array<{                 // 👈 opcional
+    id: number;
+    url: string;
+    alt_text?: string | null;
+    is_cover: boolean;
+    sort_order: number;
+  }>;
 };
 
 // Disponibilidad /courts/{id}/availability
@@ -181,4 +212,33 @@ export async function getAvailabilityPublic(
 export async function searchCourtsPublic(params: SearchCourtsParams) {
   const { data } = await http.get<CourtSearchResult[]>(`/venues/courts/search`, { params });
   return data;
+}
+
+// Court Photos
+export async function listCourtPhotos(venueId: number, courtId: number): Promise<CourtPhoto[]> {
+  const { data } = await http.get(`/venues/${venueId}/courts/${courtId}/photos`);
+  return data as CourtPhoto[];
+}
+
+export async function createCourtPhoto(
+  venueId: number,
+  courtId: number,
+  body: CourtPhotoCreate
+): Promise<CourtPhoto> {
+  const { data } = await http.post(`/venues/${venueId}/courts/${courtId}/photos`, body);
+  return data as CourtPhoto;
+}
+
+export async function updateCourtPhoto(
+  venueId: number,
+  courtId: number,
+  photoId: number,
+  body: CourtPhotoUpdate
+): Promise<CourtPhoto> {
+  const { data } = await http.patch(`/venues/${venueId}/courts/${courtId}/photos/${photoId}`, body);
+  return data as CourtPhoto;
+}
+
+export async function deleteCourtPhoto(venueId: number, courtId: number, photoId: number): Promise<void> {
+  await http.delete(`/venues/${venueId}/courts/${courtId}/photos/${photoId}`);
 }

@@ -14,6 +14,7 @@ from app.domains.users.models import User
 
 from . import private as _private   # tu archivo con CRUD owner (/venues, /{venue_id}, /{venue_id}/courts)
 from . import public as _public
+from .venues_photos_ import router as venues_photos
 
 router = APIRouter(prefix="/venues", tags=["venues"])
 
@@ -125,3 +126,4 @@ def delete_venue(
 router.include_router(_private.router)         # /venues/* (owner)
 router.include_router(_public.router)          # /venues/public/* y /venues/courts/search etc.
 router.include_router(court_photos_private_router)     # /venues/{venue_id}/courts/{court_id}/photos (owner)
+router.include_router(venues_photos)

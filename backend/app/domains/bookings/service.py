@@ -38,7 +38,7 @@ class BookingListFilters:
     mine: bool = False
     date_from: Optional[datetime] = None
     date_to: Optional[datetime] = None
-    requester_user_id: Optional[int] = None  # para resolver "mine"
+    requester_user_id: Optional[int] = None
 
 # -------------------------
 # Helpers internos (privados del service)
@@ -223,3 +223,20 @@ def list_owner_bookings(db: Session, owner_id: int,
     if to_dt:
         q = q.where(Booking.start_datetime < to_dt)
     return list(db.scalars(q).all())
+
+    # --- SERVICE ---
+def list_bookings_svc(db: Session, filters: BookingListFilters) -> list[Booking]:
+    q = select(Booking)
+    effective_user_id = filters.user_id
+    if filters.mine and filters.requester_user_id:
+        effective_user_id = filters.requester_user_id
+    if filters.court_id is not None:
+        q = q.where(Booking.court_id == filters.court_id)
+    if effective_user_id is not None:
+        q = q.where(Booking.user_id == effective_user_id)
+    if filters.date_from is not None:
+        q = q.where(Booking.start_datetime >= filters.date_from)
+    if filters.date_to is not None:
+        q = q.where(Booking.start_datetime < filters.date_to)
+    q = q.order_by(Booking.start_datetime.asc())
+    return db.execute(q).scalars().all()
