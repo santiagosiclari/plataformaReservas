@@ -16,8 +16,6 @@ from app.domains.bookings import routers as bookings
 from app.domains.pricing import routers as prices
 from app.domains.venues.public import router as venues_public
 
-
-# Carga .env (en config ya se lee, pero si querés reforzar)
 load_dotenv()
 
 app = FastAPI(title="Reservas API")
@@ -26,8 +24,8 @@ app = FastAPI(title="Reservas API")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:3000"
+        "http://localhost:5173",                # desarrollo
+        "https://plataformareserva.netlify.app" # producción frontend
     ],
     allow_credentials=True,
     allow_methods=["*"],

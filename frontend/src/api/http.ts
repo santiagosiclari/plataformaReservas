@@ -1,9 +1,4 @@
 // src/api/http.ts
-// Axios singleton with JWT auth, automatic refresh, and sane defaults.
-// Backend defaults assumed:
-// - Access token: Bearer JWT (short-lived)
-// - Refresh token: long-lived (HTTP-only cookie or returned once). Here we store it optionally in localStorage
-//   for simplicity; if your backend sets it as cookie, you can remove REFRESH handling from storage.
 
 import axios, { AxiosError, AxiosRequestConfig } from "axios";
 
