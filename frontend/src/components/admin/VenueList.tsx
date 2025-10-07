@@ -4,11 +4,11 @@ import type { VenueListProps } from "./admin.types";
 export default function VenueList({ venues, venueId, onSelect, onCreate, onUpdate, onDelete }: VenueListProps) {
   const [mode, setMode] = useState<"view" | "create" | "edit">("view");
   const selected = venues.find(v => v.id === venueId) || null;
-  const [name, setName] = useState(""); const [address, setAddress] = useState("");
+  const [name, setName] = useState(""); const [address, setAddress] = useState("");const [city, setCity] = useState("");
 
   useEffect(() => {
-    if (mode === "edit" && selected) { setName(selected.name || ""); setAddress(selected.address || ""); }
-    if (mode === "create") { setName(""); setAddress(""); }
+    if (mode === "edit" && selected) { setName(selected.name || ""); setAddress(selected.address || ""); setCity(selected.city || "")}
+    if (mode === "create") { setName(""); setAddress(""); setCity("")}
   }, [mode, selected]);
 
   return (
@@ -34,8 +34,10 @@ export default function VenueList({ venues, venueId, onSelect, onCreate, onUpdat
       {mode !== "view" && (
         <form className="form-grid" style={{ marginTop: 12 }} onSubmit={(e) => {
           e.preventDefault();
-          if (mode === "create") onCreate({ name, address });
-          if (mode === "edit") onUpdate({ name, address });
+          const payload = { name: name.trim(), address: address.trim(), city: city.trim() };
+
+          if (mode === "create") onCreate(payload);
+          if (mode === "edit") onUpdate(payload);
           setMode("view");
         }}>
           <label>
@@ -44,7 +46,11 @@ export default function VenueList({ venues, venueId, onSelect, onCreate, onUpdat
           </label>
           <label>
             <span>Dirección</span>
-            <input value={address} onChange={e => setAddress(e.target.value)} placeholder="Opcional" />
+            <input value={address} onChange={e => setAddress(e.target.value)} required />
+          </label>
+          <label>
+            <span>Ciudad</span> {/* 👈 nuevo campo */}
+            <input value={city} onChange={e => setCity(e.target.value)} required />
           </label>
           <div className="form-actions">
             <button className="btn" type="submit">Guardar</button>

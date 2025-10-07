@@ -90,8 +90,8 @@ export async function listVenueCourts(venueId: number): Promise<CourtSummary[]> 
 // CRUD (OWNER)
 export interface VenueCreate {
   name: string;
-  address?: string | null;
-  city?: string | null;
+  address: string;
+  city: string;
   latitude?: number | null;
   longitude?: number | null;
   photos?: VenuePhoto[];

@@ -93,9 +93,8 @@ def notify_booking_state_change(booking_id: int, old_status: BookingStatusEnum, 
 
         params = _mail_params_for_transition(old_status, new_status)
         if not params:
-            return  # transición sin mail
+            return
 
-        # UID/Sequence para ICS (aunque tu sender no lo use aún, no molesta)
         _ensure_uid_sequence(db, bk)
 
         venue_name = getattr(venue, "name", f"Venue {venue.id if venue else ''}")

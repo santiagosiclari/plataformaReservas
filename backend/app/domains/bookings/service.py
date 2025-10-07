@@ -150,7 +150,7 @@ def create_booking(db: Session, user_id: int, court_id: int, start: datetime, en
         end_datetime=end,
         price_total=price,
         status=status_ or BookingStatusEnum.PENDING,
-        expires_at=now + timedelta(minutes=20),                # 👈 vence en 20'
+        expires_at=now + timedelta(minutes=20),
 
     )
     db.add(bk)
@@ -284,6 +284,7 @@ def decline_booking_svc(db: Session, booking_id: int, actor: User, now: Optional
     bk = _get_booking_or_404(db, booking_id)
     _ensure_owner_of_court(db, actor, bk.court_id)
 
+    old = bk.status
     # Opción A: usar método decline() en la SM (recomendado)
     if hasattr(bk._sm(), "decline"):
         bk._sm().decline(bk, by_user_id=actor.id, at=now)

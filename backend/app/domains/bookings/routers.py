@@ -6,10 +6,10 @@ from app.domains.bookings.service import (
     create_booking as svc_create_booking,
     get_booking as svc_get_booking,
     update_booking as svc_update_booking,
-    cancel_booking_svc,                # 👈 nuevo: cancelación con permisos (user/admin)
-    confirm_booking_svc,               # 👈 nuevo: owner confirma
-    decline_booking_svc,               # 👈 nuevo: owner rechaza
-    expire_pending_bookings_svc,       # 👈 nuevo: job/manual
+    cancel_booking_svc,
+    confirm_booking_svc,
+    decline_booking_svc,
+    expire_pending_bookings_svc,
     BookingEmailContext,
     svc_list_owner_bookings,
 )
@@ -28,9 +28,7 @@ from app.domains.notifications.calendar_sender import send_booking_confirmation_
 from app.core.deps import get_db, get_current_user, require_owner
 from app.domains.bookings.service import BookingListFilters, list_bookings_svc
 
-
 router = APIRouter(prefix="/bookings", tags=["bookings"])
-
 
 @router.post("", response_model=BookingOut, status_code=status.HTTP_201_CREATED)
 def create_booking(payload: BookingCreate, background_tasks: BackgroundTasks,
@@ -106,7 +104,6 @@ def update_booking(booking_id: int, payload: BookingUpdate,
         new_end=payload.end_datetime,
         new_status=None,  # 👈 bloqueamos cambio de estado por PATCH
     )
-    # (Opcional) disparar mail ICS de reprogramación
     return bk
 
 @router.delete("/{booking_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -141,7 +138,6 @@ def owner_bookings(
 
 @router.post("/{booking_id}/confirm", response_model=BookingOut)
 def confirm_booking_ep(booking_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
-    # Solo OWNER (o admin) dentro del service
     bk = confirm_booking_svc(db, booking_id, actor=user, now=datetime.utcnow())
     return bk
 
