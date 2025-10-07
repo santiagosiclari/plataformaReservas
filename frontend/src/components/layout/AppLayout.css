@@ -1,52 +1,89 @@
+/* --- Tema base: define tokens y breakpoints, sin colores --- */
 :root{
-    --bg: #0b0c10;
-    --panel: #111218;
-    --text: #e8eaf0;
-    --muted: #a7adba;
-    --brand: #6ee7ff;
-    --brand-600: #34d3ff;
-    --border: #20232b;
-  
-    --space-1: .25rem;
-    --space-2: .5rem;
-    --space-3: 1rem;
-    --space-4: 1.5rem;
-    --space-5: 2rem;
-    --radius: 14px;
-    --shadow: 0 6px 24px rgba(0,0,0,.18);
-  
-    /* breakpoints */
-    --bp-md: 768px;
-    --bp-lg: 1200px;
-  }
-  
-  /* Reset mínimo */
-  *{ box-sizing: border-box; }
-  html, body, #root{ height: 100%; }
-  body{
-    margin: 0;
-    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji";
-    color: var(--text);
-    background: linear-gradient(180deg, #0b0c10 0%, #0e1016 100%);
-  }
-  
-  /* App layout */
-  .app-root { min-height:100dvh; background:#fff; }
-  .app-main { background:#fff; }
-  
-  @media (min-width: 768px){
-    .app-main{ padding-block: var(--space-4); }
-  }
-  
-  /* Container (lg) */
-  .container{
-    width: 100%;
-    max-width: 1120px; /* ~ MUI lg */
-    margin-inline: auto;
-    padding-inline: var(--space-3);
-  }
-  
-  @media (min-width: 768px){
-    .container{ padding-inline: var(--space-4); }
-  }
-  
+  --space-1: .25rem;
+  --space-2: .5rem;
+  --space-3: 1rem;
+  --space-4: 1.5rem;
+  --space-5: 2rem;
+  --radius: 14px;
+  --shadow: 0 6px 24px rgba(0,0,0,.18);
+
+  /* breakpoints */
+  --bp-md: 768px;
+  --bp-lg: 1200px;
+}
+
+/* --- Paleta LIGHT --- */
+:root[data-theme="light"]{
+  --bg: #ffffff;
+  --panel: #ffffff;
+  --surface: #ffffff;
+  --text: #0f172a;          /* slate-900 */
+  --muted: #475569;         /* slate-600 */
+  --border: #e2e8f0;        /* slate-200 */
+
+  --primary: #2563eb;       /* blue-600 */
+  --primary-contrast: #ffffff;
+
+  --brand: #2563eb;
+  --brand-600: #1d4ed8;
+
+  --hover: #f1f5f9;         /* slate-100 */
+  --menu-bg: #ffffff;
+  --danger: #b91c1c;        /* red-700 */
+  --danger-bg-hover: #fee2e2; /* red-100 */
+  --gradient-start: #ffffff;
+  --gradient-end: #f8fafc;  /* slate-50 */
+}
+
+/* --- Paleta DARK --- */
+:root[data-theme="dark"]{
+  --bg: #0b0c10;
+  --panel: #111218;
+  --surface: #0f172a;       /* slate-900-ish */
+  --text: #e8eaf0;
+  --muted: #a7adba;
+  --border: #20232b;
+
+  --primary: #60a5fa;       /* blue-400 */
+  --primary-contrast: #0b0c10;
+
+  --brand: #6ee7ff;
+  --brand-600: #34d3ff;
+
+  --hover: rgba(255,255,255,0.12);
+  --menu-bg: #0f172a;
+  --danger: #f87171;         /* red-400 */
+  --danger-bg-hover: rgba(248,113,113,0.12);
+  --gradient-start: #0b0c10;
+  --gradient-end: #0e1016;
+}
+
+/* Reset mínimo */
+*{ box-sizing: border-box; }
+html, body, #root{ height: 100%; }
+body{
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji";
+  color: var(--text);
+  background: linear-gradient(180deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+}
+
+/* App layout: ahora usa variables, no #fff fijos */
+.app-root { min-height: 100dvh; background: var(--bg); color: var(--text); }
+.app-main { background: var(--bg); }
+
+@media (min-width: 768px){
+  .app-main{ padding-block: var(--space-4); }
+}
+
+/* Container (lg) */
+.container{
+  width: 100%;
+  max-width: 1120px; /* ~ MUI lg */
+  margin-inline: auto;
+  padding-inline: var(--space-3);
+}
+@media (min-width: 768px){
+  .container{ padding-inline: var(--space-4); }
+}

@@ -2,20 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getMe, logout } from "../../api/auth.api";
 import type { User } from "../../api/users.api";
+import { createRoleRequest } from "../../api/users.api";
 import "./user.css";
-
-/**
- * /user — Página de perfil del usuario (NO admin)
- * - Ver datos básicos (email y rol solo lectura)
- * - Editar nombre y teléfono
- * - Cambiar contraseña
- * - Cerrar sesión
- *
- * Endpoints asumidos (ajustá a tu API real):
- * - GET   /auth/me                       -> { id, name, email, phone, role, created_at }
- * - PATCH /users/{id}                    -> { name?, phone? }
- * - POST  /auth/change-password          -> { current_password, new_password }
- */
 
 function getAuthHeaders() {
   const token = localStorage.getItem("token");
@@ -24,6 +12,12 @@ function getAuthHeaders() {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   } as HeadersInit;
 }
+
+// --- contrato sugerido de backend ---
+// POST /admin/owner-requests
+// body: { user_id: number, role: "OWNER" | "ADMIN" }
+// -> 202 Accepted { status: "pending" }
+// El backend dispara el email a santisiclari@gmail.com con enlaces de aceptar/rechazar.
 
 const UserPage: React.FC = () => {
   const navigate = useNavigate();
@@ -42,6 +36,11 @@ const UserPage: React.FC = () => {
   const [confirmPwd, setConfirmPwd] = useState("");
   const [changingPwd, setChangingPwd] = useState(false);
   const [pwdMsg, setPwdMsg] = useState<string | null>(null);
+
+  // role request
+  const [reqRole, setReqRole] = useState<"OWNER" | "ADMIN">("OWNER");
+  const [reqLoading, setReqLoading] = useState(false);
+  const [reqMsg, setReqMsg] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -66,7 +65,7 @@ const UserPage: React.FC = () => {
     setProfileMsg(null);
     try {
       const res = await fetch(`/users/${user.id}`, {
-        method: "PATCH", // si tu backend usa PUT, cambialo
+        method: "PATCH",
         headers: getAuthHeaders(),
         body: JSON.stringify({ name, phone }),
       });
@@ -84,14 +83,8 @@ const UserPage: React.FC = () => {
   async function handleChangePassword(e: React.FormEvent) {
     e.preventDefault();
     setPwdMsg(null);
-    if (newPwd.length < 8) {
-      setPwdMsg("La nueva contraseña debe tener al menos 8 caracteres");
-      return;
-    }
-    if (newPwd !== confirmPwd) {
-      setPwdMsg("Las contraseñas no coinciden");
-      return;
-    }
+    if (newPwd.length < 8) return setPwdMsg("La nueva contraseña debe tener al menos 8 caracteres");
+    if (newPwd !== confirmPwd) return setPwdMsg("Las contraseñas no coinciden");
     setChangingPwd(true);
     try {
       const res = await fetch("/auth/change-password", {
@@ -104,13 +97,33 @@ const UserPage: React.FC = () => {
         throw new Error(msg || "No se pudo cambiar la contraseña");
       }
       setPwdMsg("Contraseña actualizada ✔");
-      setCurrentPwd("");
-      setNewPwd("");
-      setConfirmPwd("");
+      setCurrentPwd(""); setNewPwd(""); setConfirmPwd("");
     } catch (err: any) {
       setPwdMsg(err?.message || "Error cambiando contraseña");
     } finally {
       setChangingPwd(false);
+    }
+  }
+
+// handler:
+  async function handleRequestRole(e: React.FormEvent) {
+    e.preventDefault();
+    if (!user) return;
+    if (user.role === "ADMIN" || user.role === "OWNER") {
+      setReqMsg("Ya contás con permisos elevados.");
+      return;
+    }
+    setReqLoading(true);
+    setReqMsg(null);
+    try {
+      await createRoleRequest(user.id, reqRole);
+      setReqMsg(
+        `Solicitud enviada ✔ Se notificó a santisiclari@gmail.com para aprobar el rol ${reqRole}.`
+      );
+    } catch (err: any) {
+      setReqMsg(err?.message || "No se pudo enviar la solicitud");
+    } finally {
+      setReqLoading(false);
     }
   }
 
@@ -136,6 +149,35 @@ const UserPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Solicitar rol elevado */}
+      <div className="user-card">
+        <div className="section-header">
+          <h2 className="section-title">⚙️ Permisos</h2>
+        </div>
+        <form className="form-row" onSubmit={handleRequestRole}>
+          <label>
+            <span>Rol solicitado</span>
+            <select
+              value={reqRole}
+              onChange={(e) => setReqRole(e.target.value as "OWNER" | "ADMIN")}
+              className="select"
+            >
+              <option value="OWNER">OWNER (gestión de sedes)</option>
+              <option value="ADMIN">ADMIN (administrador total)</option>
+            </select>
+          </label>
+          <div className="form-actions">
+            <button type="submit" className="btn-primary" disabled={reqLoading || user.role === "ADMIN" || user.role === "OWNER"}>
+              {reqLoading ? "Enviando…" : "Solicitar rol"}
+            </button>
+          </div>
+          {reqMsg && <p className="hint">{reqMsg}</p>}
+          {(user.role === "ADMIN" || user.role === "OWNER") && (
+            <p className="hint">Ya tenés permisos elevados ({user.role}).</p>
+          )}
+        </form>
+      </div>
+
       {/* Editar perfil */}
       <div className="user-card">
         <div className="section-header">
@@ -151,7 +193,9 @@ const UserPage: React.FC = () => {
             <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+54911…" />
           </label>
           <div className="form-actions">
-            <button type="submit" className="btn" disabled={savingProfile}>{savingProfile ? "Guardando…" : "Guardar cambios"}</button>
+            <button type="submit" className="btn" disabled={savingProfile}>
+              {savingProfile ? "Guardando…" : "Guardar cambios"}
+            </button>
           </div>
           {profileMsg && <p className="hint">{profileMsg}</p>}
         </form>
@@ -176,7 +220,9 @@ const UserPage: React.FC = () => {
             <input type="password" value={confirmPwd} onChange={(e) => setConfirmPwd(e.target.value)} required />
           </label>
           <div className="form-actions">
-            <button type="submit" className="btn" disabled={changingPwd}>{changingPwd ? "Actualizando…" : "Cambiar contraseña"}</button>
+            <button type="submit" className="btn" disabled={changingPwd}>
+              {changingPwd ? "Actualizando…" : "Cambiar contraseña"}
+            </button>
           </div>
           {pwdMsg && <p className="hint">{pwdMsg}</p>}
         </form>

@@ -1,7 +1,8 @@
 import React from "react";
 import type { Booking } from "../../api/bookings.api";
-import { Link } from "react-router-dom";
+import { Link as RouterLink } from "react-router-dom";
 import type { CourtDetailPublic } from "../../api/courts.api";
+import { TableCell, Stack, Button, Link } from "@mui/material";
 
 export default function ActionsCell({
   booking, tab, canOwner, expired,
@@ -18,36 +19,58 @@ export default function ActionsCell({
   const pending = booking.status === "PENDING";
 
   return (
-    <td style={{ padding: 8, textAlign: "right", display: "flex", gap: 8, justifyContent: "flex-end" }}>
-      {/* PLAYER: cancelar */}
-      {tab === "mine" && (booking.status === "PENDING" || booking.status === "CONFIRMED") && (
-        <button className="btn" onClick={() => onCancel(booking.id)}>Cancelar</button>
-      )}
-      {/* OWNER: confirmar / rechazar sólo si PENDING y no vencida */}
-      {tab === "owner" && canOwner && pending && !expired && (
-        <>
-          <button className="btn-primary" onClick={() => onConfirm(booking.id)}>Confirmar</button>
-          <button className="btn" onClick={() => onDecline(booking.id)}>Rechazar</button>
-        </>
-      )}
-      {tab === "owner" && canOwner && pending && expired && (
-        <span className="muted">Vencida</span>
-      )}
-    </td>
+    <TableCell align="right">
+      <Stack direction="row" spacing={1} justifyContent="flex-end">
+        {/* PLAYER: cancelar */}
+        {tab === "mine" && (booking.status === "PENDING" || booking.status === "CONFIRMED") && (
+          <Button variant="outlined" color="inherit" onClick={() => onCancel(booking.id)}>
+            Cancelar
+          </Button>
+        )}
+
+        {/* OWNER: confirmar / rechazar */}
+        {tab === "owner" && canOwner && pending && !expired && (
+          <>
+            <Button variant="contained" onClick={() => onConfirm(booking.id)}>
+              Confirmar
+            </Button>
+            <Button variant="outlined" color="inherit" onClick={() => onDecline(booking.id)}>
+              Rechazar
+            </Button>
+          </>
+        )}
+
+        {tab === "owner" && canOwner && pending && expired && (
+          <Button variant="text" color="inherit" disabled>Vencida</Button>
+        )}
+      </Stack>
+    </TableCell>
   );
 }
 
+/* Botonera usada en la pantalla de confirmación de reserva */
 export const Actions: React.FC<{
-    court: CourtDetailPublic;
-    date: string;
-    disabled: boolean;
-    onConfirm: () => void;
-    submitting: boolean;
-    }> = ({ court, date, disabled, onConfirm, submitting }) => (
-    <div className="actions">
-    <Link className="btn" to={`/courts/${court.id}?date=${date}`}>Cambiar horarios</Link>
-    <button className="btn-primary" onClick={onConfirm} disabled={disabled}>
-    {submitting ? "Confirmando..." : "Confirmar reserva"}
-    </button>
-    </div>
-    );
+  court: CourtDetailPublic;
+  date: string;
+  disabled: boolean;
+  onConfirm: () => void;
+  submitting: boolean;
+}> = ({ court, date, disabled, onConfirm, submitting }) => (
+  <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+    <Button
+      component={RouterLink}
+      to={`/courts/${court.id}?date=${date}`}
+      variant="outlined"
+      color="inherit"
+    >
+      Cambiar horarios
+    </Button>
+    <Button
+      variant="contained"
+      onClick={onConfirm}
+      disabled={disabled}
+    >
+      {submitting ? "Confirmando..." : "Confirmar reserva"}
+    </Button>
+  </Stack>
+);

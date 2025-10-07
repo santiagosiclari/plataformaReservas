@@ -69,3 +69,32 @@ export function maskEmail(email: string): string {
   const tail = user.slice(-1);
   return `${head}${"*".repeat(Math.max(1, user.length - 3))}${tail}@${domain}`;
 }
+
+// ---------- Role request (nuevo) ----------
+export type RoleRequestStatus = "pending" | "approved" | "rejected";
+
+export interface RoleRequest {
+  id: number;
+  user_id: number;
+  role: Role;                 // "OWNER" | "ADMIN"
+  status: RoleRequestStatus;  // "pending" | "approved" | "rejected"
+  created_at: string;         // ISO8601
+  resolved_at?: string | null;
+}
+
+/**
+ * Crea una solicitud para elevar el rol del usuario.
+ * Backend recomendado: POST /admin/role-requests
+ * Body: { user_id, role }    -> 202 { id, user_id, role, status:"pending", created_at }
+ * (El backend envía el mail a santisiclari@gmail.com con el link de aprobación)
+ */
+export async function createRoleRequest(user_id: number, role: Role): Promise<RoleRequest> {
+  const { data } = await http.post("/admin/role-requests", { user_id, role });
+  return data as RoleRequest;
+}
+
+/** (opcional) Traer mis solicitudes previas */
+export async function listMyRoleRequests(): Promise<RoleRequest[]> {
+  const { data } = await http.get("/admin/role-requests/mine");
+  return Array.isArray(data) ? (data as RoleRequest[]) : [];
+}

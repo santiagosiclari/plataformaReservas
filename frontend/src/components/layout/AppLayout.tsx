@@ -1,23 +1,30 @@
+// src/components/layout/AppLayout.tsx
 import React from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import Header from "./Header";
 import Footer from "./Footer";
 import "./AppLayout.css";
 
-const AppLayout: React.FC = () => {
+type AppLayoutProps = {
+  mode: "light" | "dark";
+  toggleTheme: () => void;
+};
+
+const AppLayout: React.FC<AppLayoutProps> = ({ mode, toggleTheme }) => {
   const navigate = useNavigate();
 
   return (
     <div className="app-root">
       <Header
-        user={undefined}
+        brand="Plataforma Reservas"
         onLogin={() => navigate("/login")}
         onLogout={() => navigate("/logout")}
-        brand="Plataforma Reservas"
+        myBookingsPath="/bookings?mine=1"
+        mode={mode}
+        onToggleTheme={toggleTheme}
       />
 
       <main className="app-main">
-        {/* Usá .container para ancho “lg”; podés quitarlo en páginas full-bleed */}
         <div className="container">
           <Outlet />
         </div>

@@ -24,10 +24,15 @@ import AdminManagePage from "./pages/Admin/AdminManagePage";
 import RequireAuth from "./auth/RequireAuth";
 import RequireOwner from "./auth/RequireOwner";
 
-function App() {
+type AppProps = {
+  mode: "light" | "dark";
+  toggleTheme: () => void;
+};
+
+function App({ mode, toggleTheme }: AppProps) {
   return (
     <Routes>
-      <Route element={<AppLayout />}>
+      <Route element={<AppLayout mode={mode} toggleTheme={toggleTheme} />}>
         {/* públicas */}
         <Route index element={<HomePage />} />
         <Route path="search" element={<SearchPage />} />
@@ -35,7 +40,7 @@ function App() {
         <Route path="login" element={<LoginPage />} />
         <Route path="register" element={<RegisterPage />} />
 
-        {/* booking (singular) - puede estar protegida si querés que solo reserven logueados */}
+        {/* booking (singular) */}
         <Route
           path="booking"
           element={
@@ -63,7 +68,7 @@ function App() {
           }
         />
 
-        {/* listado de reservas (mis reservas / owner tabs) */}
+        {/* listado de reservas */}
         <Route
           path="bookings"
           element={
@@ -101,4 +106,5 @@ function App() {
     </Routes>
   );
 }
+
 export default App;
