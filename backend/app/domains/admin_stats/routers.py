@@ -3,7 +3,7 @@ from datetime import datetime, date
 from typing import Optional, List, Literal
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import select, func, and_, literal_column
+from sqlalchemy import select, func, and_, literal_column, Integer
 from app.core.deps import get_db, get_current_user, require_owner
 from app.domains.users.models import User
 from app.domains.venues.models import Venue, Court

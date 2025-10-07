@@ -5,7 +5,7 @@ export function toCSVRow(values: (string | number | null | undefined)[]): string
       return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
     }).join(",");
   }
-  
+
   export function downloadCSV(name: string, header: string[], rows: (string|number|null|undefined)[][]) {
     const csv = [toCSVRow(header), ...rows.map(toCSVRow)].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -14,4 +14,3 @@ export function toCSVRow(values: (string | number | null | undefined)[]): string
     a.href = url; a.download = name; a.click();
     URL.revokeObjectURL(url);
   }
-  

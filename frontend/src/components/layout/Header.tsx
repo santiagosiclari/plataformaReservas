@@ -28,29 +28,14 @@ const Header: React.FC<HeaderProps> = ({
   const { user, logout } = useAuth();
   const authed = !!user;
 
-  const isAdmin = user?.role === "OWNER" || user?.role === "ADMIN"; // badge + Admin link
-  const isOwner = user?.role === "OWNER";                            // Manage link
+  const role = String(user?.role ?? "").toUpperCase();
+  const isAdminOrOwner = role === "ADMIN" || role === "OWNER";
 
   const handleBookingsClick: React.MouseEventHandler<HTMLAnchorElement> = (e) => {
     if (!authed) {
       e.preventDefault();
       const next = encodeURIComponent(myBookingsPath);
       navigate(`/login?next=${next}`);
-    }
-  };
-
-  // 🔹 Permite click si es OWNER o ADMIN (solo bloquea si no es ninguno)
-  const handleAdminClick: React.MouseEventHandler<HTMLAnchorElement> = (e) => {
-    if (!isAdmin) {
-      e.preventDefault();
-      navigate(`/login?next=${encodeURIComponent(ADMIN_DEFAULT)}`);
-    }
-  };
-
-  const handleManageClick: React.MouseEventHandler<HTMLAnchorElement> = (e) => {
-    if (!isOwner) {
-      e.preventDefault();
-      navigate(`/login?next=${encodeURIComponent(MANAGE_DEFAULT)}`);
     }
   };
 
@@ -86,23 +71,23 @@ const Header: React.FC<HeaderProps> = ({
           {authed ? (
             <div className="user-menu">
               <button className="user-chip" aria-haspopup="menu">
-                {user?.name ?? "Usuario"}{isAdmin && <span className="badge-admin">Admin</span>}
+                {user?.name ?? "Usuario"}{isAdminOrOwner && <span className="badge-admin">Admin</span>}
                 <span className="chev">▾</span>
               </button>
               <div className="menu" role="menu">
                 <Link className="menu-item" to="/user">Mi perfil</Link>
                 <Link className="menu-item" to={myBookingsPath} onClick={handleBookingsClick}>Mis reservas</Link>
 
-                {/* Panel Admin: OWNER o ADMIN */}
-                {isAdmin && (
-                  <Link className="menu-item" to={ADMIN_DEFAULT} onClick={handleAdminClick}>
+                {/* Panel Admin: ADMIN u OWNER */}
+                {isAdminOrOwner && (
+                  <Link className="menu-item" to={ADMIN_DEFAULT}>
                     Panel Admin
                   </Link>
                 )}
 
-                {/* Panel Manage: solo OWNER */}
-                {isOwner && (
-                  <Link className="menu-item" to={MANAGE_DEFAULT} onClick={handleManageClick}>
+                {/* Panel Manage: ADMIN u OWNER (coincide con tus guards) */}
+                {isAdminOrOwner && (
+                  <Link className="menu-item" to={MANAGE_DEFAULT}>
                     Panel Manage
                   </Link>
                 )}

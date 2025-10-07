@@ -17,12 +17,11 @@ import UserPage from "./pages/User/UserPage";
 import LoginPage from "./pages/Login/LoginPage";
 import RegisterPage from "./pages/Register/RegisterPage";
 
-
 import AdminDashboardPage from "./pages/Admin/AdminDashboardPage";
 import AdminManagePage from "./pages/Admin/AdminManagePage";
 
 import RequireAuth from "./auth/RequireAuth";
-import RequireOwner from "./auth/RequireOwner";
+import RequireAdminOrOwner from "./auth/RequireAdminOrOwner";
 
 type AppProps = {
   mode: "light" | "dark";
@@ -83,9 +82,9 @@ function App({ mode, toggleTheme }: AppProps) {
           path="admin"
           element={
             <RequireAuth>
-              <RequireOwner>
+              <RequireAdminOrOwner>
                 <AdminDashboardPage />
-              </RequireOwner>
+              </RequireAdminOrOwner>
             </RequireAuth>
           }
         />
@@ -93,9 +92,9 @@ function App({ mode, toggleTheme }: AppProps) {
           path="admin/manage"
           element={
             <RequireAuth>
-              <RequireOwner>
+              <RequireAdminOrOwner>
                 <AdminManagePage />
-              </RequireOwner>
+              </RequireAdminOrOwner>
             </RequireAuth>
           }
         />

@@ -42,8 +42,8 @@ app.include_router(availability.router, prefix="/api/v1", tags=["availability"])
 app.include_router(bookings.router, prefix="/api/v1", tags=["bookings"])
 app.include_router(prices.router, prefix="/api/v1", tags=["prices"])
 app.include_router(venues_public, prefix="/api/v1", tags=["venues-public"])
-app.include_router(admin_stats, prefix="/api/v1")     # /admin/stats/...
-app.include_router(admin_roles, prefix="/api/v1")     # /admin/role-requests/...
+app.include_router(admin_stats, prefix="/api/v1")
+app.include_router(admin_roles, prefix="/api/v1")
 
 
 # --- Startup: init DB ---
