@@ -40,3 +40,12 @@ def require_owner(current: Annotated[User, Depends(get_current_user)]) -> User:
     if current.role not in (RoleEnum.OWNER, RoleEnum.ADMIN):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Solo OWNER/ADMIN")
     return current
+
+def require_admin(me: User = Depends(get_current_user)) -> User:
+    r = _role_value(me.role)
+    if r in (RoleEnum.ADMIN.value, RoleEnum.OWNER.value, "ADMIN", "OWNER"):
+        return me
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Necesitás rol OWNER o ADMIN."
+    )

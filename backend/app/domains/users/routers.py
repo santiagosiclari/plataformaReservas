@@ -12,7 +12,6 @@ from app.domains.bookings.models import Booking
 
 router = APIRouter(prefix="/users", tags=["users"])
 
-
 @router.patch("/{user_id}", response_model=UserOut)
 def update_user_basic(
     user_id: int,

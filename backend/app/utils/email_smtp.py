@@ -97,3 +97,45 @@ def send_html_email_gmail(to_owner: str | None,
                 _send(addr)
             except Exception as e:
                 print(f"[email][send_booking_confirmation_with_ics] {addr} -> {e}")
+
+def send_basic_html_email(to_email: str, subject: str, html_body: str):
+    SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
+    SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
+    SMTP_USER = os.getenv("SMTP_USER")
+    SMTP_PASS = os.getenv("SMTP_PASS")
+    EMAIL_FROM = os.getenv("EMAIL_FROM") or SMTP_USER
+    FORCE_TLS = os.getenv("SMTP_FORCE_TLS", "false").lower() in ("1","true","yes")
+
+    msg = EmailMessage()
+    msg["From"] = EMAIL_FROM
+    msg["To"] = to_email
+    msg["Subject"] = subject
+    msg.set_content("Tu cliente de correo no soporta HTML.")
+    msg.add_alternative(html_body, subtype="html")
+
+    print(f"[MAIL] Connecting {SMTP_HOST}:{SMTP_PORT} as {SMTP_USER}, to={to_email}")
+    with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+        server.ehlo()
+        if FORCE_TLS:
+            # Fuerza STARTTLS sin chequear features (Gmail lo soporta)
+            server.starttls()
+            server.ehlo()
+            print("[MAIL] STARTTLS ok")
+        if SMTP_USER and SMTP_PASS:
+            server.login(SMTP_USER, SMTP_PASS)
+            print("[MAIL] Login ok")
+        server.send_message(msg)
+        print(f"[MAIL] Sent to {to_email} subject='{subject}' OK")
+
+
+def send_basic_html_email_safe(to_email: str | None, subject: str, html: str):
+    if not to_email:
+        print("[WARN] send_basic_html_email_safe: destinatario vacío; se omite envío")
+        return
+    try:
+        send_basic_html_email(to_email, subject, html)
+    except Exception as e:
+        # logueá pero NO re-lances para que el background no rompa el request
+        import traceback
+        print("[ERROR] Email no enviado:", e)
+        traceback.print_exc()

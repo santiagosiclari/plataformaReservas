@@ -4,9 +4,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
-
 from app.core.db import Base, engine, SessionLocal
-
 from app.domains.auth import routers as auth
 from app.domains.users import routers as users
 from app.domains.venues import routers as venues
@@ -15,7 +13,8 @@ from app.domains.schedules import routers as schedules
 from app.domains.bookings import routers as bookings
 from app.domains.pricing import routers as prices
 from app.domains.venues.public import router as venues_public
-
+from app.domains.admin_stats.admin_roles import router as admin_roles
+from app.domains.admin_stats.routers import router as admin_stats
 
 # Carga .env (en config ya se lee, pero si querés reforzar)
 load_dotenv()
@@ -43,6 +42,8 @@ app.include_router(availability.router, prefix="/api/v1", tags=["availability"])
 app.include_router(bookings.router, prefix="/api/v1", tags=["bookings"])
 app.include_router(prices.router, prefix="/api/v1", tags=["prices"])
 app.include_router(venues_public, prefix="/api/v1", tags=["venues-public"])
+app.include_router(admin_stats, prefix="/api/v1")     # /admin/stats/...
+app.include_router(admin_roles, prefix="/api/v1")     # /admin/role-requests/...
 
 
 # --- Startup: init DB ---
