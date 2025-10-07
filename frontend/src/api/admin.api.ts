@@ -1,39 +1,31 @@
 // src/api/admin.api.ts
-const q = (params: Record<string, any>) =>
-    Object.entries(params)
-      .filter(([,v]) => v !== undefined && v !== null && v !== "")
-      .map(([k,v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`)
-      .join("&");
-  
-  export async function listOwnedVenues() {
-    const r = await fetch(`/venues?owned=1`, { headers: { "Content-Type": "application/json" }});
-    return r.json();
-  }
+import http from "./http";
 
-  
-  export async function listCourtsByVenue(venueId: number) {
-    const r = await fetch(`/venues/${venueId}/courts`, { headers: { "Content-Type": "application/json" }});
-    return r.json();
-  }
-  
-  export async function getSummary(params: any) {
-    const r = await fetch(`/admin/stats/summary?${q(params)}`); return r.json();
-  }
-  export async function getBookingsPerDay(params: any) {
-    const r = await fetch(`/admin/stats/bookings-per-day?${q(params)}`); return r.json();
-  }
-  export async function getRevenuePerDay(params: any) {
-    const r = await fetch(`/admin/stats/revenue-per-day?${q(params)}`); return r.json();
-  }
-  export async function getTop(params: any) {
-    const r = await fetch(`/admin/stats/top?${q(params)}`); return r.json();
-  }
-  export async function getHeatmap(params: any) {
-    const r = await fetch(`/admin/stats/heatmap?${q(params)}`); return r.json();
-  }
-  
-  // PRICES (por court)
-  export async function listPrices(venueId: number, courtId: number) { /* GET /venues/:venueId/courts/:courtId/prices */ }
-  export async function createPrice(venueId: number, courtId: number, body: Partial<{ day_of_week: number | null; start_time: string; end_time: string; amount: number }>) { /* POST */ }
-  export async function updatePrice(venueId: number, courtId: number, priceId: number, body: Partial<{ day_of_week: number | null; start_time: string; end_time: string; amount: number }>) { /* PATCH */ }
-  export async function deletePrice(venueId: number, courtId: number, priceId: number) { /* DELETE */ }
+export async function listOwnedVenues() {
+  const { data } = await http.get(`/venues`, { params: { owned: 1 } });
+  return data;
+}
+export async function listCourtsByVenue(venueId: number) {
+  const { data } = await http.get(`/venues/${venueId}/courts`);
+  return data;
+}
+export async function getSummary(params: any) {
+  const { data } = await http.get(`/admin/stats/summary`, { params });
+  return data;
+}
+export async function getBookingsPerDay(params: any) {
+  const { data } = await http.get(`/admin/stats/bookings-per-day`, { params });
+  return data;
+}
+export async function getRevenuePerDay(params: any) {
+  const { data } = await http.get(`/admin/stats/revenue-per-day`, { params });
+  return data;
+}
+export async function getTop(params: any) {
+  const { data } = await http.get(`/admin/stats/top`, { params });
+  return data;
+}
+export async function getHeatmap(params: any) {
+  const { data } = await http.get(`/admin/stats/heatmap`, { params });
+  return data;
+}

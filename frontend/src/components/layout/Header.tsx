@@ -2,21 +2,34 @@
 import React from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import "./Header.css";
-import { isAuthenticated } from "../../api/auth.api";
 import { useAuth } from "../../auth/AuthContext";
-import { isOwnerOrAdmin } from "../../auth/role.util";
 
 type HeaderProps = {
   brand: string;
-  onLogin: () => void;
-  onLogout: () => void;
+  onLogin?: () => void;
+  onLogout?: () => void;
   myBookingsPath?: string;
+  mode: "light" | "dark";
+  onToggleTheme: () => void;
 };
 
-const Header: React.FC<HeaderProps> = ({ brand, onLogin, onLogout, myBookingsPath = "/bookings?mine=1" }) => {
+const ADMIN_DEFAULT = "/admin";            // ← coincide con tu App
+const MANAGE_DEFAULT = "/admin/manage";    // ← coincide con tu App
+
+const Header: React.FC<HeaderProps> = ({
+  brand,
+  onLogin,
+  onLogout,
+  myBookingsPath = "/bookings?mine=1",
+  mode,
+  onToggleTheme,
+}) => {
   const navigate = useNavigate();
-  const authed = isAuthenticated();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const authed = !!user;
+
+  const role = String(user?.role ?? "").toUpperCase();
+  const isAdminOrOwner = role === "ADMIN" || role === "OWNER";
 
   const handleBookingsClick: React.MouseEventHandler<HTMLAnchorElement> = (e) => {
     if (!authed) {
@@ -26,7 +39,11 @@ const Header: React.FC<HeaderProps> = ({ brand, onLogin, onLogout, myBookingsPat
     }
   };
 
-  const isAdmin = user?.role === "OWNER" || user?.role === "ADMIN";
+  const handleLogout = () => {
+    logout();
+    if (onLogout) onLogout();
+    else navigate("/login");
+  };
 
   return (
     <header className="site-header">
@@ -42,25 +59,50 @@ const Header: React.FC<HeaderProps> = ({ brand, onLogin, onLogout, myBookingsPat
         </nav>
 
         <div className="actions">
-              {authed ? (
-        <div className="user-menu">
-          <button className="user-chip" aria-haspopup="menu">
-            {user?.name ?? "Usuario"}{isAdmin && <span className="badge-admin">Admin</span>}
-            <span className="chev">▾</span>
+          <button
+            className="btn btn-ghost"
+            onClick={onToggleTheme}
+            title={mode === "dark" ? "Cambiar a claro" : "Cambiar a oscuro"}
+            aria-label="Cambiar tema"
+          >
+            {mode === "dark" ? "🌙" : "☀️"}
           </button>
-          <div className="menu" role="menu">
-            <Link className="menu-item" to="/user">Mi perfil</Link>
-            <Link className="menu-item" to={myBookingsPath} onClick={handleBookingsClick}>Mis reservas</Link>
-            {isAdmin && <Link className="menu-item" to="/admin">Panel Admin</Link>}
-            {isAdmin && <Link className="menu-item" to="/admin/manage">Panel Manage</Link>}
-            <div className="menu-sep" />
-            <button className="menu-item danger" onClick={onLogout}>Salir</button>
-          </div>
-        </div>
-      ) : (
+
+          {authed ? (
+            <div className="user-menu">
+              <button className="user-chip" aria-haspopup="menu">
+                {user?.name ?? "Usuario"}{isAdminOrOwner && <span className="badge-admin">Admin</span>}
+                <span className="chev">▾</span>
+              </button>
+              <div className="menu" role="menu">
+                <Link className="menu-item" to="/user">Mi perfil</Link>
+                <Link className="menu-item" to={myBookingsPath} onClick={handleBookingsClick}>Mis reservas</Link>
+
+                {/* Panel Admin: ADMIN u OWNER */}
+                {isAdminOrOwner && (
+                  <Link className="menu-item" to={ADMIN_DEFAULT}>
+                    Panel Admin
+                  </Link>
+                )}
+
+                {/* Panel Manage: ADMIN u OWNER (coincide con tus guards) */}
+                {isAdminOrOwner && (
+                  <Link className="menu-item" to={MANAGE_DEFAULT}>
+                    Panel Manage
+                  </Link>
+                )}
+
+                <div className="menu-sep" />
+                <button className="menu-item danger" onClick={handleLogout}>Salir</button>
+              </div>
+            </div>
+          ) : (
             <button
               className="btn btn-primary"
-              onClick={() => navigate(`/login?next=${encodeURIComponent(location.pathname + location.search)}`)}
+              onClick={() => {
+                if (onLogin) onLogin();
+                else navigate(`/login?next=${encodeURIComponent(location.pathname + location.search)}`);
+              }}
             >
               Ingresar
             </button>

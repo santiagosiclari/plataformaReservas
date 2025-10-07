@@ -29,3 +29,8 @@ class BookingStatusEnum(str, Enum):
     EXPIRED = "EXPIRED"              # nunca se confirmó en el tiempo límite
     NO_SHOW = "NO_SHOW"              # usuario no se presentó
     REFUNDED = "REFUNDED"            # devolución procesada
+
+class RoleRequestStatus(str, Enum):
+    pending  = "pending"
+    approved = "approved"
+    rejected = "rejected"

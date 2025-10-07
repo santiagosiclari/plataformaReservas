@@ -1,11 +1,12 @@
 /* Paleta mínima en claro */
-:root{
-  --bg: #ffffff;        /* fondo global */
-  --surface:#ffffff;    /* tarjetas/paper */
-  --text:#0f172a;       /* slate-900 */
-  --muted:#475569;      /* slate-600 */
-  --border:#e2e8f0;     /* slate-200 */
+#root {
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  text-align: initial; /* deja que cada sección decida su alineación */
 }
+
 
 /* Fuerzo modo claro del navegador */
 :root{ color-scheme: light; }

@@ -1,7 +1,11 @@
 import React from "react";
+import type { Booking } from "../../api/bookings.api";
 import StatusBadge from "./StatusBadge";
 import Countdown from "./Countdown";
-import type { Booking } from "../../api/bookings.api";
+import {
+  Table, TableHead, TableRow, TableCell, TableBody,
+  Typography
+} from "@mui/material";
 
 function fmt(dt: string) {
   const d = new Date(dt);
@@ -13,7 +17,7 @@ function money(v: number | string | null | undefined) {
 }
 function expiredOf(b: Booking): boolean {
   const pending = b.status === "PENDING";
-  const hasExpiry = b.expires_at !== null && b.expires_at !== undefined;
+  const hasExpiry = b.expires_at != null;
   const left = hasExpiry ? (new Date(b.expires_at!).getTime() - Date.now()) : Infinity;
   return pending && hasExpiry && left <= 0;
 }
@@ -29,43 +33,48 @@ export default function BookingsTable({
   onConfirm: (id: number) => void;
   onDecline: (id: number) => void;
   onCancel: (id: number) => void;
-  ActionsCell: React.ComponentType<React.ComponentProps<any>>;
+  ActionsCell: React.ComponentType<{
+    booking: Booking;
+    tab: "mine" | "owner";
+    canOwner: boolean;
+    expired: boolean;
+    onConfirm: (id: number) => void;
+    onDecline: (id: number) => void;
+    onCancel: (id: number) => void;
+  }>;
 }) {
   return (
-    <table className="table" style={{ width: "100%", borderCollapse: "collapse", marginTop: 12 }}>
-      <thead>
-        <tr>
-          <th style={{ textAlign: "left", padding: 8, borderBottom: "1px solid var(--border)" }}>#</th>
-          <th style={{ textAlign: "left", padding: 8, borderBottom: "1px solid var(--border)" }}>Court</th>
-          <th style={{ textAlign: "left", padding: 8, borderBottom: "1px solid var(--border)" }}>Inicio</th>
-          <th style={{ textAlign: "left", padding: 8, borderBottom: "1px solid var(--border)" }}>Fin</th>
-          <th style={{ textAlign: "left", padding: 8, borderBottom: "1px solid var(--border)" }}>Estado</th>
-          <th style={{ textAlign: "left", padding: 8, borderBottom: "1px solid var(--border)" }}>Vencimiento</th>
-          <th style={{ textAlign: "right", padding: 8, borderBottom: "1px solid var(--border)" }}>Precio</th>
-          {(tab === "mine" || canOwner) && (
-            <th style={{ textAlign: "right", padding: 8, borderBottom: "1px solid var(--border)" }}>Acciones</th>
-          )}
-        </tr>
-      </thead>
-      <tbody>
+    <Table size="medium" sx={{ "& th, & td": { py: 1, borderColor: "divider" } }}>
+      <TableHead>
+        <TableRow>
+          <TableCell>#</TableCell>
+          <TableCell>Court</TableCell>
+          <TableCell>Inicio</TableCell>
+          <TableCell>Fin</TableCell>
+          <TableCell>Estado</TableCell>
+          <TableCell>Vencimiento</TableCell>
+          <TableCell align="right">Precio</TableCell>
+          {(tab === "mine" || canOwner) && <TableCell align="right">Acciones</TableCell>}
+        </TableRow>
+      </TableHead>
+      <TableBody>
         {rows.map((b) => {
           const pending = b.status === "PENDING";
-          const hasExpiry = b.expires_at !== null && b.expires_at !== undefined;
+          const hasExpiry = b.expires_at != null;
           const isExpired = expiredOf(b);
 
           return (
-            <tr key={b.id}>
-              <td style={{ padding: 8 }}>#{b.id}</td>
-              <td style={{ padding: 8 }}>Court {b.court_id}</td>
-              <td style={{ padding: 8 }}>{fmt(b.start_datetime)}</td>
-              <td style={{ padding: 8 }}>{fmt(b.end_datetime)}</td>
-              <td style={{ padding: 8 }}><StatusBadge status={b.status} /></td>
-              <td style={{ padding: 8 }}>
-                {pending ? (hasExpiry ? <Countdown expiresAt={b.expires_at} /> : <span className="muted">—</span>) : <span className="muted">—</span>}
-              </td>
-              <td style={{ padding: 8, textAlign: "right" }}>{money(b.price_total)}</td>
+            <TableRow key={b.id} hover>
+              <TableCell>#{b.id}</TableCell>
+              <TableCell>Court {b.court_id}</TableCell>
+              <TableCell>{fmt(b.start_datetime)}</TableCell>
+              <TableCell>{fmt(b.end_datetime)}</TableCell>
+              <TableCell><StatusBadge status={b.status} /></TableCell>
+              <TableCell>
+                {pending ? (hasExpiry ? <Countdown expiresAt={b.expires_at} /> : <Typography color="text.secondary">—</Typography>) : <Typography color="text.secondary">—</Typography>}
+              </TableCell>
+              <TableCell align="right">{money(b.price_total)}</TableCell>
 
-              {/* Actions */}
               {(tab === "mine" || canOwner) && (
                 <ActionsCell
                   booking={b}
@@ -77,10 +86,10 @@ export default function BookingsTable({
                   onCancel={onCancel}
                 />
               )}
-            </tr>
+            </TableRow>
           );
         })}
-      </tbody>
-    </table>
+      </TableBody>
+    </Table>
   );
 }

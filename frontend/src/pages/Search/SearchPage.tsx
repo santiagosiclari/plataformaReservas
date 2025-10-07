@@ -3,6 +3,9 @@ import { searchCourts, type CourtSearchResult } from "../../api/search.api";
 import "./search.css";
 import { Map, Marker } from "pigeon-maps";
 
+// MUI
+import { Stack, TextField, FormControl, InputLabel, Select, MenuItem, Button, Alert, Typography } from "@mui/material";
+
 const kmFmt = (v?: number) => {
   if (v == null) return "";
   if (v < 1) return `${Math.round(v * 1000)} m`;
@@ -30,7 +33,7 @@ const SearchPage: React.FC = () => {
           lat: pos?.lat,
           lng: pos?.lng,
           radius_km: pos ? radiusKm : undefined,
-          sport: sport || undefined, // ojo: tu backend usa "PADEL" (no "PADDLE")
+          sport: sport || undefined, // Backend usa "PADEL"
           limit: 24,
         });
         setResults(data);
@@ -55,7 +58,7 @@ const SearchPage: React.FC = () => {
     );
   }
 
-  // Construye puntos desde /courts/search (usa lat/lng)
+  // puntos para el mapa
   const mapPoints = useMemo(
     () =>
       results
@@ -67,7 +70,7 @@ const SearchPage: React.FC = () => {
             Number.isFinite(Number(r.lng))
         )
         .map((r) => ({
-          id: r.id, // id de la cancha
+          id: r.id,
           venueId: r.venue_id,
           lat: Number(r.lat),
           lng: Number(r.lng),
@@ -77,7 +80,6 @@ const SearchPage: React.FC = () => {
     [results]
   );
 
-  // Centrado: tu ubicación > primer resultado > default CABA
   const mapCenter: [number, number] =
     pos ? [pos.lat, pos.lng]
     : mapPoints.length ? [mapPoints[0].lat, mapPoints[0].lng]
@@ -85,44 +87,61 @@ const SearchPage: React.FC = () => {
 
   return (
     <div className="search-page">
-      {/* Barra de búsqueda */}
+      {/* Barra de búsqueda (grid via .search-bar) */}
       <div className="search-bar">
-        <input
-          className="search-input"
-          type="text"
-          placeholder="Buscar por barrio, sede o deporte…"
+        <TextField
           value={q}
           onChange={(e) => setQ(e.target.value)}
+          placeholder="Buscar por barrio, sede o deporte…"
+          label="Búsqueda"
+          fullWidth
+          size="medium"
+          variant="outlined"
         />
-        <select
-          className="search-select"
-          value={sport}
-          onChange={(e) => setSport(e.target.value)}
+
+        <FormControl fullWidth>
+          <InputLabel id="sport-label">Deporte</InputLabel>
+          <Select
+            labelId="sport-label"
+            label="Deporte"
+            value={sport}
+            onChange={(e) => setSport(String(e.target.value))}
+          >
+            <MenuItem value="">Todos</MenuItem>
+            <MenuItem value="FOOTBALL">Fútbol</MenuItem>
+            <MenuItem value="TENNIS">Tenis</MenuItem>
+            <MenuItem value="PADEL">Pádel</MenuItem>
+          </Select>
+        </FormControl>
+
+        <FormControl fullWidth disabled={!pos}>
+          <InputLabel id="radius-label">Radio</InputLabel>
+          <Select
+            labelId="radius-label"
+            label="Radio"
+            value={radiusKm}
+            onChange={(e) => setRadiusKm(Number(e.target.value))}
+          >
+            <MenuItem value={3}>3 km</MenuItem>
+            <MenuItem value={5}>5 km</MenuItem>
+            <MenuItem value={10}>10 km</MenuItem>
+          </Select>
+        </FormControl>
+
+        <Button
+          onClick={askLocation}
+          variant="outlined"
+          fullWidth
+          aria-label="Usar mi ubicación"
         >
-          <option value="">Todos</option>
-          <option value="FOOTBALL">Fútbol</option>
-          <option value="TENNIS">Tenis</option>
-          <option value="PADEL">Pádel</option>{/* <- usa PADEL si tu backend así lo guarda */}
-        </select>
-        <select
-          className="search-select"
-          value={radiusKm}
-          onChange={(e) => setRadiusKm(Number(e.target.value))}
-          disabled={!pos}
-        >
-          <option value={3}>3 km</option>
-          <option value={5}>5 km</option>
-          <option value={10}>10 km</option>
-        </select>
-        <button className="btn" onClick={askLocation} aria-label="Usar mi ubicación">
           📍 Usar ubicación
-        </button>
+        </Button>
       </div>
 
-      {err && <div className="alert error">{err}</div>}
+      {err && <Alert severity="error">{err}</Alert>}
 
-      {/* Mapa con Pigeon */}
-      <div style={{ height: 380, width: "100%", borderRadius: 12, overflow: "hidden", marginBottom: 16 }}>
+      {/* Mapa */}
+      <div style={{ height: 380, width: "100%", borderRadius: 12, overflow: "hidden", marginBottom: 16, border: "1px solid var(--border)" }}>
         <Map defaultCenter={mapCenter} defaultZoom={12} height={380}>
           {mapPoints.map((p) => (
             <Marker
@@ -135,12 +154,13 @@ const SearchPage: React.FC = () => {
         </Map>
       </div>
 
-      {/* Resumen y cards */}
+      {/* Resumen */}
       <div className="search-summary">
         {loading ? "Buscando…" : `${results.length} resultados`}
         {pos && !loading && <span className="muted"> cerca tuyo</span>}
       </div>
 
+      {/* Cards */}
       <ul className="cards-grid">
         {results.map((c) => (
           <li
