@@ -1,6 +1,6 @@
 from typing import List, Optional
 from datetime import datetime
-from sqlalchemy import String, DateTime, ForeignKey, func, Numeric, Integer
+from sqlalchemy import String, DateTime, ForeignKey, func, Numeric, Integer, Index, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.db import Base
 
@@ -11,16 +11,32 @@ from app.shared.enums import SportEnum, SurfaceEnum
 class Venue(Base):
     __tablename__ = "venues"
 
+    __table_args__ = (
+        Index("idx_city_state", "city", "state"),
+    )
+
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(120), nullable=False)
-    address: Mapped[str] = mapped_column(String(255), nullable=False)
+
+    # --- Dirección normalizada ---
+    address: Mapped[str] = mapped_column(String(255), nullable=False)  # Calle + número
     city: Mapped[str] = mapped_column(String(120), nullable=False)
+    state: Mapped[Optional[str]] = mapped_column(String(120))
+    postal_code: Mapped[Optional[str]] = mapped_column(String(20))
+    country_code: Mapped[Optional[str]] = mapped_column(String(5))  # Ej: "AR"
 
     latitude: Mapped[Optional[float]] = mapped_column(Numeric(9, 6))
     longitude: Mapped[Optional[float]] = mapped_column(Numeric(9, 6))
 
+    # --- Integración con Google Maps ---
+    google_place_id: Mapped[Optional[str]] = mapped_column(String(120), unique=True)
+    google_formatted_address: Mapped[Optional[str]] = mapped_column(String(255))
+    address_components: Mapped[Optional[dict]] = mapped_column(JSON)  # para guardar los address_components completos
+    validated_address: Mapped[bool] = mapped_column(Boolean, default=False)
+
     owner_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=False)
+
     owner: Mapped["User"] = relationship(
         "User",
         back_populates="owned_venues",

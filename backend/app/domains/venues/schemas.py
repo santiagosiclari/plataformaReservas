@@ -3,12 +3,34 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, model_validator, HttpUrl
 from app.shared.enums import SportEnum, SurfaceEnum
 
+# ---- Address Validation ----
+class AddressValidateRequest(BaseModel):
+    region_code: str = Field("AR", description="Código de país, ej AR")
+    address_lines: List[str] = Field(..., description="Calle y número, etc.")
+    locality: Optional[str] = None
+    administrative_area: Optional[str] = None
+    postal_code: Optional[str] = None
+
+class AddressValidateResponse(BaseModel):
+    # Lo importante ya mapeado
+    address: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    postal_code: Optional[str] = None
+    country_code: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    google_formatted_address: Optional[str] = None
+    address_components: Optional[dict] = None
+    validated_address: bool = False
+
+    # Original (opcional, por si querés debug)
+    raw: Optional[dict] = None
+
 # ---------- Venue ----------
 
 class VenueBase(BaseModel):
     name: str
-    address: str
-    city: str
     latitude: Optional[float] = Field(None, ge=-90, le=90)
     longitude: Optional[float] = Field(None, ge=-180, le=180)
 
@@ -20,12 +42,19 @@ class VenueBase(BaseModel):
         return self
 
 class VenueCreate(VenueBase):
-    pass
+    # En vez de address/city, recibimos lo necesario para validar con Google:
+    region_code: str = Field("AR", description="Código de país ISO-3166-1 alpha-2, ej 'AR'")
+    address_lines: List[str] = Field(..., description="Calle y número. Pueden ser varias líneas.")
+    locality: Optional[str] = Field(None, description="Ciudad/Localidad (ayuda a validar)")
+    administrative_area: Optional[str] = Field(None, description="Provincia/Estado (ayuda a validar)")
+    postal_code: Optional[str] = Field(None, description="Código postal (si se conoce)")
+    # (opcional) cuando más adelante integres Places:
+    google_place_id: Optional[str] = None
 
+# Para updates seguimos permitiendo tocar campos sueltos (por ahora mantenemos simple)
 class VenueUpdate(BaseModel):
     name: Optional[str] = None
-    address: Optional[str] = None
-    city: Optional[str] = None
+    # Si querés permitir actualizar lat/lng manualmente:
     latitude: Optional[float] = Field(None, ge=-90, le=90)
     longitude: Optional[float] = Field(None, ge=-180, le=180)
 
@@ -60,9 +89,18 @@ class VenuePhotoOut(VenuePhotoBase):
 
 class VenueOut(VenueBase):
     id: int
+    address: str
+    city: str
+    state: Optional[str] = None
+    postal_code: Optional[str] = None
+    country_code: Optional[str] = None
+    google_place_id: Optional[str] = None
+    google_formatted_address: Optional[str] = None
+    validated_address: bool
     owner_user_id: int
     created_at: datetime
-    photos: List[VenuePhotoOut] = Field(default_factory=list)  # 👈 inmutable
+    photos: List[VenuePhotoOut] = Field(default_factory=list)
+
     model_config = ConfigDict(from_attributes=True)
 
 # ---------- Court ----------

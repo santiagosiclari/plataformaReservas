@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     JWT_AUDIENCE: str | None = None
     JWT_LEEWAY_SECONDS: int = 30   # un poco de margen por reloj/nbf
     API_PREFIX: str = "/api/v1"
+    GOOGLE_API_KEY: str | None = None
 
     # DB
     DATABASE_URL: str  # <- como str simple

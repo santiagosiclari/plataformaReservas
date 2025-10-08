@@ -10,12 +10,8 @@ from .config import settings
 class Base(DeclarativeBase):
     pass
 
-
 def _normalize_db_url(raw: str) -> str:
-    """
-    - Fuerza el driver psycopg (SQLAlchemy 2.x + psycopg3)
-    - Asegura sslmode=require (Render Postgres lo necesita para conexiones externas)
-    """
+
     if not raw:
         return raw
     if raw.startswith("postgresql://"):

@@ -18,6 +18,12 @@ if str(BASE_DIR) not in sys.path:
 # --- Importa tu Base ---
 from app.core.db import Base
 
+import app.domains.users.models
+import app.domains.venues.models
+import app.domains.bookings.models
+import app.domains.schedules.models
+import app.domains.pricing.models
+
 # --- Configuración de logging de alembic.ini ---
 config = context.config
 if config.config_file_name is not None:

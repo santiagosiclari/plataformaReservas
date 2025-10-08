@@ -8,6 +8,7 @@ from app.core.db import Base, engine, SessionLocal
 from app.domains.auth import routers as auth
 from app.domains.users import routers as users
 from app.domains.venues import routers as venues
+from app.domains.venues.integrations import router as integrations
 from app.domains.scheduling import routers as availability
 from app.domains.schedules import routers as schedules
 from app.domains.bookings import routers as bookings
@@ -44,6 +45,8 @@ app.include_router(prices.router, prefix="/api/v1", tags=["prices"])
 app.include_router(venues_public, prefix="/api/v1", tags=["venues-public"])
 app.include_router(admin_stats, prefix="/api/v1")
 app.include_router(admin_roles, prefix="/api/v1")
+app.include_router(integrations, prefix="/api/v1")
+
 
 
 # --- Startup: init DB ---

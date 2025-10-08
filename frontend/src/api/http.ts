@@ -44,7 +44,7 @@ export function clearAuthTokens() { setAuthTokens(null, null); }
 // Axios instance
 // ------------------------------
 const http = axios.create({
-  baseURL: `${API_BASE_URL}${API_PREFIX}`, // `${API_BASE_URL}${API_PREFIX}` "http://localhost:8000/api/v1"
+  baseURL: http://localhost:8000/api/v1, // `${API_BASE_URL}${API_PREFIX}` "http://localhost:8000/api/v1"
   timeout: TIMEOUT_MS,
   // If your backend uses cookies for refresh endpoints:
   // withCredentials: true,
