@@ -1,12 +1,16 @@
-/* src/components/layout/Header.css */
+/* ————— Header ————— */
 .site-header {
   position: sticky;
   top: 0;
   z-index: 50;
   background: var(--surface);
+  color: var(--text);               /* asegura contraste en dark */
   border-bottom: 1px solid var(--border);
   backdrop-filter: saturate(180%) blur(8px);
 }
+
+/* sutil separación del contenido */
+.site-header { box-shadow: 0 1px 0 var(--border); }
 
 .header-inner {
   max-width: 1100px;
@@ -21,8 +25,11 @@
   font-weight: 800;
   color: var(--text);
   letter-spacing: -0.02em;
+  text-decoration: none;
 }
+.brand-link:hover { opacity: .9; }
 
+/* Nav */
 .nav {
   margin-left: auto;
   display: flex;
@@ -33,14 +40,19 @@
   color: var(--muted);
   padding: 8px 12px;
   border-radius: 10px;
-  transition: background .15s ease, color .15s ease;
+  transition: background .15s ease, color .15s ease, box-shadow .15s ease;
+  text-decoration: none;
 }
-.nav-link:hover { background: #f1f5f9; color: var(--text); } /* slate-100 */
+.nav-link:hover {
+  background: var(--hover);         /* ← token, no hex fijo */
+  color: var(--text);
+}
 .nav-link.active {
   background: var(--primary);
   color: var(--primary-contrast);
 }
 
+/* Actions / user chip */
 .actions .btn,
 .user-chip {
   border: 1px solid var(--border);
@@ -53,7 +65,12 @@
 
 /* --- User menu --- */
 .user-menu { position: relative; }
-.user-menu .user-chip { cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.user-menu .user-chip {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
 .user-menu .chev { font-size: .8rem; opacity: .7; }
 
 /* menu oculto por defecto */
@@ -62,7 +79,7 @@
   right: 0;
   top: calc(100% + 6px);
   min-width: 200px;
-  background: var(--surface);
+  background: var(--menu-bg);
   border: 1px solid var(--border);
   border-radius: 12px;
   box-shadow: var(--shadow);
@@ -83,11 +100,13 @@
   border-radius: 10px;
   color: var(--text);
   text-decoration: none;
+  transition: background .15s ease, color .15s ease;
 }
-.menu-item:hover { background: #f1f5f9; } /* slate-100 */
+.menu-item:hover { background: var(--hover); }   /* ← token */
 .menu-sep { height: 1px; background: var(--border); margin: 6px 0; }
-.menu-item.danger { color: #b91c1c; } /* red-700 */
-.menu-item.danger:hover { background: #fee2e2; } /* red-100 */
+
+.menu-item.danger { color: var(--danger); }
+.menu-item.danger:hover { background: var(--danger-bg-hover); }
 
 .badge-admin {
   margin-left: 8px;

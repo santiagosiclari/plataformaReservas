@@ -1,102 +1,292 @@
-/* ================== ADMIN BASE ================== */
-.admin-page { display: grid; gap: 16px; padding: 16px; grid-template-columns: 280px 1fr; }
-.panel, .card { background: #0f1115; border: 1px solid #2a2f3a; border-radius: 12px; padding: 12px; }
-.panel-header { font-weight: 700; margin-bottom: 8px; }
-.section-title { margin: 0 0 6px; font-size: 14px; color: #c8d1e1; }
+/* ================== ADMIN MANAGE (look & feel del Dashboard) ================== */
+/* Este archivo usa los tokens globales: --bg, --panel, --surface, --text, --muted, --border, --accent */
 
-.btn { background: #1e2633; border: 1px solid #2a3445; color: #e6edf7; padding: 6px 10px; border-radius: 8px; }
-.btn:hover { background: #283246; }
-.btn-ghost { background: transparent; border-color: #2a3445; }
-.btn-ghost:hover { background: rgba(255,255,255,.04); }
-
-.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.form-grid label { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: #aeb7c6; }
-.form-grid input, .form-grid select, .form-grid textarea {
-  background: #0b0e13; border: 1px solid #2a2f3a; color: #e6edf7; border-radius: 8px; padding: 8px;
+.admin-page {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;                 /* igual que dashboard */
+  padding: 16px;             /* igual que dashboard */
 }
-.form-actions { display: flex; gap: 8px; }
 
-.list .chip { background: #151a22; border: 1px solid #2a2f3a; color: #c8d1e1; padding: 6px 10px; border-radius: 999px; }
-.list .chip.active { background: #2a3445; color: #fff; border-color: #3a4760; }
+@media (max-width: 900px) {
+  .admin-page { flex-direction: column; padding: 12px; }
+}
 
-.error { background: #35121a; color: #f5a6b3; border: 1px solid #5a1e2b; padding: 8px; border-radius: 8px; }
+/* ================== PANEL ================== */
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;       /* 12 como dashboard */
+  padding: 12px;             /* 12 como dashboard */
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  transition: background .3s, color .3s, border-color .3s;
+}
 
-.row { display: flex; align-items: center; gap: 8px; }
-
-/* ================== TABLAS ================== */
-.table-wrap { overflow: auto; max-height: 360px; border-radius: 8px; }
-.top-table th {
-  color: #c8d1e1;
+.panel-header {
   font-weight: 600;
-  background: #0f1115;
+  margin-bottom: 8px;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
-.top-table td { color: #e6edf7; }
+
+/* ================== FORM ================== */
+.form-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;                 /* un pelín más compacto */
+}
+
+.form-grid label {
+  flex: 1 1 calc(50% - 6px);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;           /* 12 como dashboard */
+  color: var(--muted);
+}
+
+@media (max-width: 600px) {
+  .form-grid label { flex: 1 1 100%; }
+}
+
+.form-grid input,
+.form-grid select,
+.form-grid textarea {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;        /* 8 como dashboard */
+  padding: 6px 8px;          /* 6–8 como dashboard */
+  font-size: 0.95rem;
+  transition: border-color .2s, box-shadow .2s, background .2s;
+}
+
+.form-grid input:hover,
+.form-grid select:hover,
+.form-grid textarea:hover {
+  background: color-mix(in srgb, var(--text) 3%, transparent);
+}
+
+.form-grid input:focus,
+.form-grid select:focus,
+.form-grid textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+/* estados */
+.form-grid .is-invalid,
+.form-grid input[aria-invalid="true"],
+.form-grid select[aria-invalid="true"],
+.form-grid textarea[aria-invalid="true"] {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 2px color-mix(in srgb, #ef4444 22%, transparent);
+}
+
+.form-grid input:disabled,
+.form-grid select:disabled,
+.form-grid textarea:disabled {
+  opacity: .7;
+  cursor: not-allowed;
+}
+
+::placeholder { color: color-mix(in srgb, var(--muted) 80%, transparent); }
+
+input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 30px transparent inset !important;
+  -webkit-text-fill-color: var(--text) !important;
+}
+
+/* acciones del formulario */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* ================== BUTTONS ================== */
+.btn {
+  background: var(--accent);
+  border: 1px solid transparent;
+  color: #fff;
+  font-weight: 600;
+  padding: 8px 12px;         /* tamaño dashboard */
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform .05s ease, filter .2s, background .2s;
+  line-height: 1;
+}
+.btn:hover { filter: brightness(.95); }
+.btn:active { transform: translateY(1px); }
+.btn:disabled {
+  background: #94a3b8; color: #fff; opacity: .9; cursor: not-allowed;
+}
+
+/* Chips ghost (Nueva/Editar/Eliminar) */
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 6px 10px;         /* compacto como dashboard */
+  border-radius: 999px;
+  line-height: 1;
+  transition: background .2s, border-color .2s, color .2s, transform .05s;
+}
+.btn-ghost:hover {
+  background: rgba(96,165,250,0.12);
+  border-color: var(--accent);
+}
+.btn-ghost:active { transform: translateY(1px); }
+.btn-ghost:disabled {
+  color: var(--muted);
+  border-color: var(--border);
+  background: transparent;
+  opacity: .7;
+  cursor: not-allowed;
+}
+
+/* Variantes */
+.btn-outline {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-outline:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+.btn-danger {
+  background: #ef4444; border-color: transparent; color: #fff;
+}
+.btn-danger:hover { filter: brightness(.95); }
+
+/* ================== SECTION ================== */
+.section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+
+section {
+  margin-top: 16px;          /* 16 como dashboard */
+  border-top: 1px solid var(--border);
+  padding-top: 12px;         /* 12 como dashboard */
+}
+
+p.muted { color: var(--muted); font-size: 13px; font-style: italic; }
+
+/* ================== LIST ================== */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.list button {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: all .2s ease;
+}
+.list button:hover {
+  background: rgba(255,255,255,.06); /* igual que dashboard */
+  border-color: var(--accent);
+}
+.list button.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+/* ================== TABLES ================== */
+.table-wrap { overflow-x: auto; border-radius: 8px; }
+
+.top-table { width: 100%; border-collapse: collapse; }
+.top-table th,
+.top-table td {
+  padding: 6px 8px;          /* padding de dashboard */
+  text-align: left;
+  font-size: 13px;
+}
+.top-table th {
+  background: var(--panel);
+  color: color-mix(in srgb, var(--text) 82%, #c8d1e1 18%);
+  font-weight: 600;
+}
+.top-table td { color: var(--text); }
 .top-table tbody tr:nth-child(odd) { background: rgba(255,255,255,.03); }
 .top-table tbody tr:hover { background: rgba(255,255,255,.06); }
 
-.price-cell {
-  font-weight: 700;
-  font-size: 15px;
-  text-align: right;
-  color: #6cf; /* resalta precios */
+/* ================== PHOTO GALLERY ================== */
+.photo-gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
 }
-.price-input { font-size: 18px; font-weight: 700; }
-
-/* ================== COURTS ================== */
-.court-selector h3,
-.court-selector .section-title,
-.court-selector .court-title {
-  color: #c8d1e1;
-  font-weight: 600;
+.photo-gallery img {
+  width: 100%;
+  max-width: 140px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
 }
 
-.court-selector button {
-  background: #111;
-  border: 1px solid #333;
-  border-radius: 8px;
-  color: #e6edf7;
-  padding: 6px 10px;
-  cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
+/* --- Sidebar + Content layout --- */
+.sidebar {
+  width: 340px;
+  position: sticky;
+  top: 16px;
+  align-self: flex-start;
+  height: fit-content;
+  background: var(--panel);
 }
-.court-selector button:hover { background: #1a1d24; border-color: #6cf; }
-.court-selector button.active {
-  background: #6cf; border-color: #6cf;
-  color: #000; font-weight: 700;
-}
-
-.court-selector .court-label {
-  display: inline-block;
-  padding: 4px 8px;
-  border-radius: 6px;
-  background: #222;
-  color: #e6edf7;
-  font-size: 14px;
-  margin-bottom: 8px;
-}
-.court-selector .list button:hover { background: rgba(255,255,255,0.05); }
-.court-selector .selected-court {
-  margin-bottom: 12px;
-  font-size: 15px;
-  font-weight: 600;
-  color: #6cf;
+.content {
+  flex: 1;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-/* ================== SCHEDULES ================== */
-.schedules-editor h3,
-.schedules-editor .section-title {
-  color: #c8d1e1;
-  font-weight: 600;
+/* Drawer móvil */
+.mobile-topbar { display: none; }
+.mobile-only { display: none; }
+
+@media (max-width: 900px) {
+  .mobile-topbar {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px; backdrop-filter: blur(6px);
+    background: color-mix(in srgb, var(--surface) 90%, transparent);
+  }
+  .mobile-topbar-title { font-weight: 700; }
+
+  .sidebar {
+    position: fixed; inset: 0 auto 0 0; width: 88%;
+    max-width: 380px; transform: translateX(-105%);
+    transition: transform .25s ease; z-index: 20; overflow-y: auto;
+    background: var(--panel); border-right: 1px solid var(--border);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .mobile-only { display: inline-flex; }
 }
 
-.schedules-editor table th { color: #c8d1e1; background: #0f1115; }
-.schedules-editor table td { color: #e6edf7; }
-
-.schedules-editor tbody tr:nth-child(odd) { background: rgba(255,255,255,.03); }
-.schedules-editor tbody tr:hover { background: rgba(255,255,255,.06); }
-
-.schedules-editor .slot-cell {
-  font-weight: 600;
-  color: #9cf;
-  text-align: right;
+/* Loading */
+.loading-overlay {
+  position: fixed; inset: 0; z-index: 50;
+  background: rgba(0,0,0,0.35);
+  display: grid; place-items: center;
 }
+.spinner {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 3px solid rgba(255,255,255,0.35);
+  border-top-color: var(--accent);
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }

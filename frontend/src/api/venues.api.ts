@@ -90,13 +90,26 @@ export async function listVenueCourts(venueId: number): Promise<CourtSummary[]> 
 // CRUD (OWNER)
 export interface VenueCreate {
   name: string;
-  address: string;
-  city: string;
+
+  // 👇 nuevos campos para Address Validation (coinciden con el backend)
+  region_code?: string;            // default 'AR' en el back
+  address_lines: string[];         // ej. ["Av. Siempre Viva 742", "Piso 3, Dpto B"]
+  locality?: string | null;        // ciudad/localidad
+  administrative_area?: string | null; // provincia/estado
+  postal_code?: string | null;     // CP si lo conocés
+
+  // futuro opcional (queda por si lo activás luego)
+  google_place_id?: string | null;
+
+  // opcional: si querés “forzar” coordenadas manualmente (deben venir ambas)
   latitude?: number | null;
   longitude?: number | null;
-  photos?: VenuePhoto[];
+
+  // si creás fotos junto con el venue, usá el tipo de creación
+  photos?: VenuePhotoCreate[];
 }
-export type VenueUpdate = Partial<VenueCreate>;
+
+export type VenueUpdate = Partial<Pick<Venue, "name" | "latitude" | "longitude">>;
 
 export async function createVenue(body: VenueCreate): Promise<Venue> {
   const { data } = await http.post("/venues", body);

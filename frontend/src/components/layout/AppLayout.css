@@ -1,4 +1,4 @@
-/* --- Tema base: define tokens y breakpoints, sin colores --- */
+/* --- Tema base: tokens y breakpoints --- */
 :root{
   --space-1: .25rem;
   --space-2: .5rem;
@@ -32,6 +32,7 @@
   --menu-bg: #ffffff;
   --danger: #b91c1c;        /* red-700 */
   --danger-bg-hover: #fee2e2; /* red-100 */
+
   --gradient-start: #ffffff;
   --gradient-end: #f8fafc;  /* slate-50 */
 }
@@ -40,21 +41,22 @@
 :root[data-theme="dark"]{
   --bg: #0b0c10;
   --panel: #111218;
-  --surface: #0f172a;       /* slate-900-ish */
-  --text: #e8eaf0;
+  --surface: #0f172a;        /* profundo pero no negro total */
+  --text: #e8eaf0;           /* texto claro */
   --muted: #a7adba;
   --border: #20232b;
 
-  --primary: #60a5fa;       /* blue-400 */
+  --primary: #60a5fa;        /* blue-400 */
   --primary-contrast: #0b0c10;
 
   --brand: #6ee7ff;
   --brand-600: #34d3ff;
 
-  --hover: rgba(255,255,255,0.12);
+  --hover: rgba(255,255,255,0.12);     /* hover neutro en dark */
   --menu-bg: #0f172a;
-  --danger: #f87171;         /* red-400 */
+  --danger: #f87171;                    /* red-400 */
   --danger-bg-hover: rgba(248,113,113,0.12);
+
   --gradient-start: #0b0c10;
   --gradient-end: #0e1016;
 }
@@ -69,7 +71,7 @@ body{
   background: linear-gradient(180deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
 }
 
-/* App layout: ahora usa variables, no #fff fijos */
+/* App layout */
 .app-root { min-height: 100dvh; background: var(--bg); color: var(--text); }
 .app-main { background: var(--bg); }
 
